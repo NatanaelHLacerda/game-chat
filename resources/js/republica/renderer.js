@@ -16,6 +16,7 @@ import { drawAvatar, drawHeadset, drawSpeakingRing, shade } from './avatar';
 import { TILE_H, TILE_W, WALL_H, toScreen } from './iso';
 import { INK, PX, block, fillDiamond, fillEllipse, rect, strokeDiamond, wallFace } from './pixel';
 import { groupRugs } from './rugs';
+import { roomBounds } from './view';
 
 const VOID = '#2b2523';
 const CREAM = '#f6ead8';
@@ -184,6 +185,32 @@ function drawNameTag(ctx, x, y, name) {
     ctx.fillText(name, left + 6, top + 9);
 }
 
+// Paredes, piso e tapetes não mudam durante o quarto: desenhados uma vez na resolução física.
+let staticLayer = null;
+
+function drawStatic(ctx, layout, camera, atlas, pixelRatio) {
+    const { minX, maxX, minY, maxY } = roomBounds(layout);
+    const w = maxX - minX;
+    const h = maxY - minY;
+
+    if (!staticLayer || staticLayer.layout !== layout || staticLayer.atlas !== atlas || staticLayer.pixelRatio !== pixelRatio) {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.ceil(w * pixelRatio);
+        canvas.height = Math.ceil(h * pixelRatio);
+        const layer = canvas.getContext('2d');
+        layer.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        layer.imageSmoothingEnabled = false;
+        const local = { x: -minX, y: -minY };
+        drawWalls(layer, layout, local, atlas);
+        drawFloor(layer, layout, local, atlas);
+        drawRugs(layer, layout, local, atlas);
+        staticLayer = { canvas, layout, atlas, pixelRatio };
+    }
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(staticLayer.canvas, camera.x + minX, camera.y + minY, w, h);
+}
+
 // Tipo de móvel (não tapete) em cada tile, memorizado por layout.
 const typesByLayout = new WeakMap();
 function typeAt(layout, x, y) {
@@ -209,7 +236,7 @@ export function avatarFoot(avatar, camera, grid, layout) {
 }
 
 /**
- * state: { layout, camera, grid, avatars, hoverTile, hoverAvatarId, width, height, decorate, atlas, time }
+ * state: { layout, camera, grid, avatars, hoverTile, hoverAvatarId, width, height, decorate, atlas, time, scale, pixelRatio }
  */
 export function drawScene(ctx, state) {
     const { layout, camera, grid, avatars, atlas } = state;
@@ -218,9 +245,7 @@ export function drawScene(ctx, state) {
     ctx.fillRect(0, 0, state.width, state.height);
     if (!atlas) return;
 
-    drawWalls(ctx, layout, camera, atlas);
-    drawFloor(ctx, layout, camera, atlas);
-    drawRugs(ctx, layout, camera, atlas);
+    drawStatic(ctx, layout, camera, atlas, state.pixelRatio ?? 1);
 
     if (state.hoverTile && grid.walkable(state.hoverTile.x, state.hoverTile.y)) {
         const top = toScreen(state.hoverTile.x, state.hoverTile.y, camera);
@@ -255,7 +280,12 @@ export function drawScene(ctx, state) {
 
     const hovered = avatars.find((a) => a.member.id === state.hoverAvatarId);
     if (hovered) {
+        // A etiqueta fica em px CSS mesmo no zoom 1×, para o texto continuar legível.
+        const scale = state.scale ?? 1;
         const foot = avatarFoot(hovered, camera, grid, layout);
-        drawNameTag(ctx, foot.x, foot.y - 82, hovered.member.name);
+        ctx.save();
+        ctx.scale(1 / scale, 1 / scale);
+        drawNameTag(ctx, foot.x * scale, (foot.y - 82) * scale, hovered.member.name);
+        ctx.restore();
     }
 }

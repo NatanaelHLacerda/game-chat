@@ -1,6 +1,7 @@
 import { CallRegistry, newCallId, newRequestId } from './call-state';
 import { createSpeakingDetector, getMicrophone, micErrorMessage } from './media';
 import { PeerMesh } from './peer-mesh';
+import { platformOf } from '../platform';
 
 const SPEAKING_INTERVAL = 250; // no máximo 4 whispers "call-speaking" por segundo
 
@@ -22,6 +23,7 @@ export class CallManager {
             iceServers: voice.ice_servers,
             signal: (event, payload) => this.send(event, payload),
             onPeerFailed: (id) => this.handlePeerFailed(id),
+            onAudioBlocked: () => this.audioBlockedNow(),
         });
 
         this.myCallId = null;
@@ -34,8 +36,16 @@ export class CallManager {
         this.localStream = null;
         this.speakingSentAt = 0;
         this.speakingTimer = null;
+        this.audioBlocked = false;
+        this.wakeLock = null;
 
         window.addEventListener('pagehide', () => this.leaveCall());
+        document.addEventListener('pointerdown', () => {
+            if (this.audioBlocked) this.resumeAudio();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && this.myCallId) this.requestWakeLock();
+        });
     }
 
     attach(session) {
@@ -121,7 +131,7 @@ export class CallManager {
             this.mesh.setLocalStream(this.localStream);
             return true;
         } catch (error) {
-            this.ui.showMicError(micErrorMessage(error));
+            this.ui.showMicError(micErrorMessage(error, platformOf(navigator.userAgent, navigator.maxTouchPoints)));
             return false;
         }
     }
@@ -386,6 +396,7 @@ export class CallManager {
 
         this.detector?.stop();
         this.detector = this.localStream ? createSpeakingDetector(this.localStream, (on) => this.setSpeaking(on)) : null;
+        this.requestWakeLock();
         this.refreshPanel();
         this.onChange();
     }
@@ -445,9 +456,50 @@ export class CallManager {
         this.registry.removeMember(this.me.id);
         this.myCallId = null;
         this.speaking.delete(this.me.id);
+        this.releaseWakeLock();
+        this.audioBlocked = false;
+        this.ui.hideAudioBlocked();
         this.ui.hideCallPanel();
         if (message) this.ui.toast(message);
         this.onChange();
+    }
+
+    // Conexão caiu (ex.: celular em segundo plano): a call local acabou; a pessoa pede de novo se quiser.
+    connectionLost() {
+        if (this.myCallId) this.endLocalCall('A conversa caiu enquanto você estava fora. Peça para entrar de novo.');
+    }
+
+    audioBlockedNow() {
+        this.audioBlocked = true;
+        this.ui.showAudioBlocked(() => this.resumeAudio());
+    }
+
+    resumeAudio() {
+        this.mesh.resumeAudio().then((ok) => {
+            if (ok) {
+                this.audioBlocked = false;
+                this.ui.hideAudioBlocked();
+            }
+        });
+    }
+
+    // Tela acesa durante a call; o navegador solta o lock quando a página fica oculta.
+    requestWakeLock() {
+        if (!navigator.wakeLock || this.wakeLock) return;
+        navigator.wakeLock
+            .request('screen')
+            .then((lock) => {
+                this.wakeLock = lock;
+                lock.addEventListener('release', () => {
+                    if (this.wakeLock === lock) this.wakeLock = null;
+                });
+            })
+            .catch(() => {});
+    }
+
+    releaseWakeLock() {
+        this.wakeLock?.release().catch(() => {});
+        this.wakeLock = null;
     }
 
     handleDeparture(id) {

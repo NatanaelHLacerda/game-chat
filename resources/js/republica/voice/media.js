@@ -7,11 +7,17 @@ export async function getMicrophone() {
     });
 }
 
-export function micErrorMessage(error) {
+const BLOCKED = {
+    ios: 'O Safari bloqueou o microfone. Toque em "aA" na barra de endereço, abra "Ajustes do Site", permita o Microfone e tente de novo.',
+    android: 'O Chrome bloqueou o microfone. Toque no ícone ao lado do endereço, abra "Permissões", permita o Microfone e tente de novo.',
+    desktop: 'O navegador bloqueou o microfone. Clique no cadeado ao lado do endereço, permita o microfone e tente de novo.',
+};
+
+export function micErrorMessage(error, platform = 'desktop') {
     switch (error?.name === 'Error' ? error.message : error?.name) {
         case 'NotAllowedError':
         case 'SecurityError':
-            return 'O navegador bloqueou o microfone. Clique no cadeado ao lado do endereço, permita o microfone e tente de novo.';
+            return BLOCKED[platform] ?? BLOCKED.desktop;
         case 'NotFoundError':
         case 'OverconstrainedError':
             return 'Nenhum microfone encontrado. Conecte um microfone e tente de novo.';

@@ -1,5 +1,6 @@
 import { renderPreview } from './avatar';
 import { flagElement } from './navigator';
+import { MOBILE_QUERY } from './view';
 
 // Cartão do morador: nome, mini-avatar e idiomas. Sem ações nesta entrega.
 export class AvatarCard {
@@ -35,6 +36,12 @@ export class AvatarCard {
 
         this.refresh(action);
         this.el.classList.remove('hidden');
+        // No celular o cartão é um painel inferior (CSS); não segue o toque.
+        if (window.matchMedia(MOBILE_QUERY).matches) {
+            this.el.style.left = '';
+            this.el.style.top = '';
+            return;
+        }
         const { width, height } = this.el.getBoundingClientRect();
         this.el.style.left = `${Math.max(8, Math.min(window.innerWidth - width - 8, screenPos.x + 16))}px`;
         this.el.style.top = `${Math.max(8, Math.min(window.innerHeight - height - 60, screenPos.y - height))}px`;

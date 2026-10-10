@@ -44,6 +44,16 @@ class HotelTest extends TestCase
         $response->assertSee('window.REPUBLICA', false);
     }
 
+    public function test_hotel_is_open_on_mobile_with_compact_controls(): void
+    {
+        $this->actingAs($this->resident())->get('/hotel')
+            ->assertOk()
+            ->assertDontSee('desktop-only')
+            ->assertSee('id="btn-zoom"', false)
+            ->assertSee('id="more-menu"', false)
+            ->assertSee('id="audio-unlock"', false);
+    }
+
     public function test_bootstrap_includes_voice_settings(): void
     {
         $voice = $this->actingAs($this->resident())->get('/hotel')->viewData('bootstrap')['voice'];

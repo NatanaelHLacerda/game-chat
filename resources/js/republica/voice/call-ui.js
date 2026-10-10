@@ -21,6 +21,7 @@ export class CallUi {
         this.micError = document.getElementById('mic-error');
         this.micErrorText = document.getElementById('mic-error-text');
         this.toasts = document.getElementById('call-toasts');
+        this.audioUnlock = document.getElementById('audio-unlock');
         this.countdowns = new Map();
         this.handlers = {};
 
@@ -28,6 +29,7 @@ export class CallUi {
         this.outgoingCancel.addEventListener('click', () => this.handlers.onCancel?.());
         this.muteButton.addEventListener('click', () => this.handlers.onToggleMute?.());
         this.leaveButton.addEventListener('click', () => this.handlers.onLeave?.());
+        this.audioUnlock.addEventListener('click', () => this.handlers.onAudioUnlock?.());
     }
 
     showIncoming({ requestId, kind, fromName, seconds, onAccept, onDecline }) {
@@ -98,6 +100,15 @@ export class CallUi {
     showMicError(message) {
         this.micErrorText.textContent = message;
         this.micError.classList.remove('hidden');
+    }
+
+    showAudioBlocked(onTap) {
+        this.handlers.onAudioUnlock = onTap;
+        this.audioUnlock.classList.remove('hidden');
+    }
+
+    hideAudioBlocked() {
+        this.audioUnlock.classList.add('hidden');
     }
 
     toast(text) {

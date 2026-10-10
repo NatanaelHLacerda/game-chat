@@ -68,7 +68,8 @@
     @media (max-width: 520px) { .profile-form { flex-direction: column; align-items: center; } }
 
     /* Hotel */
-    #game { position: fixed; inset: 0; display: block; width: 100vw; height: 100vh; cursor: pointer; }
+    body.hotel { overscroll-behavior: none; }
+    #game { position: fixed; inset: 0; display: block; width: 100vw; height: 100vh; height: 100dvh; cursor: pointer; touch-action: none; }
     #credits { position: fixed; right: 8px; bottom: 56px; z-index: 4; margin: 0; font-size: 10px; font-weight: normal; color: var(--color-cream); opacity: .6; pointer-events: none; }
     #credits a { color: inherit; pointer-events: auto; }
     #room-info { position: fixed; top: 12px; left: 12px; z-index: 5; width: 230px; }
@@ -117,11 +118,50 @@
 
     .overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 16px; background: rgb(43 37 35 / .75); }
     .overlay .window { width: min(320px, 100%); text-align: center; }
-    #desktop-only { display: none; }
-    @media (pointer: coarse) and (max-width: 899px) { #desktop-only { display: grid; } }
 
     #toolbar { position: fixed; right: 0; bottom: 0; left: 0; z-index: 8; display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: linear-gradient(#4a3f3b, var(--color-void)); border-top: 2px solid #000; }
     #toolbar form { margin: 0; }
     #toolbar .spacer { flex: 1; }
     #status { color: var(--color-cream); font-weight: normal; }
+    .mobile-only { display: none; }
+    #more-menu { display: contents; }
+    #audio-unlock { position: fixed; top: 12px; left: 50%; z-index: 14; padding: 10px 14px; color: var(--color-ink); font: bold 12px var(--font-sans); cursor: pointer; transform: translateX(-50%); }
+
+    /* Modo celular: mesmo critério de MOBILE_QUERY (resources/js/republica/view.js) */
+    @media (pointer: coarse) and (max-width: 899px) {
+        :root { --bar-h: calc(60px + env(safe-area-inset-bottom)); --call-h: 0px; }
+        body.hotel:has(#call-panel:not(.hidden)) { --call-h: 64px; }
+        input:not([type=radio]):not([type=checkbox]) { font-size: 16px; }
+        .btn { min-width: 44px; min-height: 44px; }
+
+        #toolbar { gap: 4px; padding: 8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+        #toolbar .label { display: none; }
+        .mobile-only { display: inline-flex; align-items: center; justify-content: center; }
+        #status { font-size: 10px; }
+        #more-menu { position: fixed; right: 8px; bottom: calc(var(--bar-h) + 8px); z-index: 9; display: none; flex-direction: column; gap: 6px; padding: 8px; background: var(--color-cream); border: 2px solid var(--color-ink); border-radius: 7px; box-shadow: 4px 4px 0 rgb(43 37 35 / .35); }
+        #more-menu.open { display: flex; }
+        #more-menu .btn { display: flex; align-items: center; justify-content: center; width: 100%; }
+        #more-menu .label { display: inline; margin-left: 4px; }
+
+        #room-info { top: calc(8px + env(safe-area-inset-top)); right: 8px; left: 8px; width: auto; }
+        #room-info .titlebar { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+        #room-info .content { display: none; }
+        #room-info.expanded .content { display: block; }
+
+        #navigator, #avatar-card { top: auto; right: 8px; bottom: calc(var(--bar-h) + var(--call-h) + 8px); left: 8px !important; width: auto; max-height: 60dvh; overflow-y: auto; }
+        #room-list { max-height: none; }
+        #room-list li { min-height: 44px; }
+        .titlebar { padding-right: 52px; }
+        .titlebar .close { top: 0; right: 0; width: 44px; height: 100%; border-radius: 0 5px 0 0; }
+
+        #call-panel { right: 8px; bottom: calc(var(--bar-h) + 8px); left: 8px; width: auto; }
+        #call-panel .titlebar { display: none; }
+        #call-panel .content { display: flex; align-items: center; gap: 6px; padding: 6px 8px; }
+        #call-participants { display: flex; flex: 1; flex-wrap: wrap; gap: 2px 8px; margin: 0; font-size: 10px; }
+        #call-panel .actions { margin: 0; }
+        #call-outgoing { bottom: calc(var(--bar-h) + var(--call-h) + 8px); }
+        #call-prompts { top: calc(8px + env(safe-area-inset-top)); }
+        #audio-unlock { top: calc(8px + env(safe-area-inset-top)); }
+        #credits { bottom: calc(var(--bar-h) + 4px); }
+    }
 }

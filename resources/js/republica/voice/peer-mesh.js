@@ -4,10 +4,11 @@ const ICE_WAIT_MS = 2000;
 // Uma RTCPeerConnection de áudio por participante remoto. ICE sem trickle:
 // a SDP só é enviada depois de reunir os candidatos (ou 2 s).
 export class PeerMesh {
-    constructor({ iceServers, signal, onPeerFailed }) {
+    constructor({ iceServers, signal, onPeerFailed, onAudioBlocked }) {
         this.iceServers = iceServers;
         this.signal = signal;
         this.onPeerFailed = onPeerFailed;
+        this.onAudioBlocked = onAudioBlocked;
         this.peers = new Map();
         this.audios = new Map();
         this.localStream = null;
@@ -31,7 +32,9 @@ export class PeerMesh {
                 this.audios.set(remoteId, audio);
             }
             audio.srcObject = event.streams[0];
-            audio.play().catch(() => {});
+            audio.play().catch((error) => {
+                if (error?.name === 'NotAllowedError') this.onAudioBlocked?.();
+            });
         };
         pc.onconnectionstatechange = () => {
             if (pc.connectionState === 'failed') this.onPeerFailed(remoteId);
@@ -39,6 +42,12 @@ export class PeerMesh {
 
         this.peers.set(remoteId, pc);
         return pc;
+    }
+
+    // Tenta tocar de novo todos os áudios (o iOS só libera depois de um gesto); true se todos tocaram.
+    async resumeAudio() {
+        const results = await Promise.allSettled([...this.audios.values()].map((audio) => audio.play()));
+        return results.every((result) => result.status === 'fulfilled');
     }
 
     waitForIce(pc) {

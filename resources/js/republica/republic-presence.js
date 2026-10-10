@@ -18,6 +18,9 @@ export class RepublicPresence {
 
         this.channel = window.Echo.join('republica')
             .here((members) => {
+                // Também roda ao reconectar: recomeça do zero para não sobrar ninguém que saiu nesse meio-tempo.
+                this.online.clear();
+                this.locations.clear();
                 for (const member of members) this.online.set(member.id, member);
                 this.whisper('takeover', { userId: this.me.id, tabId: this.tabId });
                 this.announce(this.roomId);

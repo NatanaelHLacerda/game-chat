@@ -68,6 +68,7 @@
     </div>
 </div>
 
+<button type="button" id="audio-unlock" class="window hidden">🔈 Toque para ouvir a conversa</button>
 <div id="call-toasts"></div>
 <div id="voice-audio" hidden></div>
 
@@ -81,24 +82,21 @@
     </div>
 </div>
 
-<div id="desktop-only" class="overlay">
-    <div class="window">
-        <div class="titlebar">República</div>
-        <div class="content"><p>A República funciona no computador.</p></div>
-    </div>
-</div>
-
 <nav id="toolbar">
-    <button type="button" class="btn" id="btn-common">🛋️ Sala de estar</button>
-    <button type="button" class="btn" id="btn-home">🏠 Meu quarto</button>
-    <button type="button" class="btn" id="btn-nav">🧭 Navegador</button>
-    <a class="btn" href="{{ route('profile.edit') }}">👤 Perfil</a>
+    <button type="button" class="btn" id="btn-common" aria-label="Sala de estar">🛋️ <span class="label">Sala de estar</span></button>
+    <button type="button" class="btn" id="btn-home" aria-label="Meu quarto">🏠 <span class="label">Meu quarto</span></button>
+    <button type="button" class="btn" id="btn-nav" aria-label="Navegador">🧭 <span class="label">Navegador</span></button>
+    <button type="button" class="btn mobile-only" id="btn-zoom" aria-label="Zoom">🔍</button>
     <span class="spacer"></span>
     <span id="status">conectando…</span>
-    <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button class="btn">Sair</button>
-    </form>
+    <button type="button" class="btn mobile-only" id="btn-more" aria-label="Mais opções" aria-expanded="false">⋯</button>
+    <div id="more-menu">
+        <a class="btn" href="{{ route('profile.edit') }}" aria-label="Perfil">👤 <span class="label">Perfil</span></a>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button class="btn">Sair</button>
+        </form>
+    </div>
 </nav>
 
 <script>
