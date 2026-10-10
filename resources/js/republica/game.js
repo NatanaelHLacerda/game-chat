@@ -1,10 +1,10 @@
+import { loadAtlas } from './atlas';
 import { AvatarCard } from './avatar-card';
 import { fitCamera, toTile } from './iso';
 import { renderNavigator } from './navigator';
 import { RepublicPresence } from './republic-presence';
 import { avatarFoot, drawScene } from './renderer';
 import { RoomSession } from './room-session';
-import { loadFurnitureSprites, spritesRequested } from './sprite-furniture';
 import { bindCloseButtons, renderPeople, watchConnection } from './ui';
 import { CallManager } from './voice/call-manager';
 import { CallUi } from './voice/call-ui';
@@ -20,7 +20,7 @@ export class Game {
         this.rooms = bootstrap.rooms;
         this.currentRoomId = null;
         this.mouse = null;
-        this.sprites = null;
+        this.atlas = null;
 
         this.canvas = document.getElementById('game');
         this.ctx = this.canvas.getContext('2d');
@@ -42,7 +42,7 @@ export class Game {
     }
 
     start() {
-        if (spritesRequested()) loadFurnitureSprites().then((sprites) => (this.sprites = sprites));
+        loadAtlas().then((atlas) => (this.atlas = atlas));
         bindCloseButtons();
         watchConnection(document.getElementById('status'));
         this.bindUi();
@@ -134,7 +134,7 @@ export class Game {
     avatarAt(px, py) {
         let hit = null;
         for (const avatar of this.session.avatars.values()) {
-            const foot = avatarFoot(avatar, this.camera, this.session.grid);
+            const foot = avatarFoot(avatar, this.camera, this.session.grid, this.layout);
             const inside = Math.abs(px - foot.x) <= HIT_W / 2 && py <= foot.y && py >= foot.y - HIT_H;
             const depth = avatar.render.x + avatar.render.y;
             if (inside && (!hit || depth > hit.depth)) hit = { avatar, depth };
@@ -177,7 +177,7 @@ export class Game {
             width: this.width,
             height: this.height,
             decorate: (id) => this.calls.decorations(id),
-            sprites: this.sprites,
+            atlas: this.atlas,
             time: performance.now() / 1000,
         });
     }

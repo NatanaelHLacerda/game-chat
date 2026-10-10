@@ -54,6 +54,18 @@ class HotelTest extends TestCase
         $this->assertStringStartsWith('stun:', $voice['ice_servers'][0]['urls']);
     }
 
+    public function test_bootstrap_includes_pixel_art_theme_of_every_layout(): void
+    {
+        $layouts = $this->actingAs($this->resident())->get('/hotel')->viewData('bootstrap')['layouts'];
+
+        $this->assertSame(array_keys(config('republica.layouts')), array_keys($layouts));
+        foreach ($layouts as $key => $layout) {
+            foreach (['floor', 'wall_left', 'wall_right'] as $part) {
+                $this->assertNotEmpty($layout['theme'][$part] ?? null, "{$key} sem theme.{$part}");
+            }
+        }
+    }
+
     public function test_rooms_endpoint_lists_common_room_first(): void
     {
         $user = $this->resident();

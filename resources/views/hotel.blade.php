@@ -5,6 +5,7 @@
 
 @section('content')
 <canvas id="game"></canvas>
+<p id="credits">Móveis e cenário: <a href="https://cryovex.itch.io/pixel-isometric-modern-interior" target="_blank" rel="noopener">Pixel Isometric Modern Interior</a>, por Cryovex</p>
 
 <section id="room-info" class="window">
     <div class="titlebar" id="room-title">…</div>

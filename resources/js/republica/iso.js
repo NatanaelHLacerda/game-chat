@@ -1,7 +1,7 @@
 // Projeção isométrica 2:1. (x, y) são coordenadas de tile; (0, 0) é o canto do fundo.
 export const TILE_W = 64;
 export const TILE_H = 32;
-export const WALL_H = 110;
+export const WALL_H = 144; // altura do bloco de parede do pack (72 px nativos × 2)
 
 // Vértice superior do losango do tile (ou canto de coordenadas fracionárias).
 export function toScreen(x, y, camera) {

@@ -1,5 +1,6 @@
 // Avatar em pixel art procedural. Unidade = 2 px × scale; origem nos pés; desenhado olhando para a direita.
-const INK = '#2b2523';
+import { INK, PX, fillEllipse, rect as pixelRect, strokeEllipse } from './pixel';
+
 const SHOE = '#3e3431';
 
 export function shade(hex, factor) {
@@ -19,16 +20,12 @@ export function drawAvatar(ctx, footX, footY, look, opts = {}) {
     ctx.save();
     ctx.translate(Math.round(footX), Math.round(footY));
 
-    ctx.fillStyle = 'rgba(43, 37, 35, 0.25)';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 12 * scale, 5 * scale, 0, 0, Math.PI * 2);
-    ctx.fill();
+    fillEllipse(ctx, 0, 0, Math.round(12 * scale / u) * u, Math.round(5 * scale / u) * u, 'rgba(43, 37, 35, 0.25)');
 
     ctx.scale(dir, 1);
-    const rect = (x, y, w, h, color) => {
-        ctx.fillStyle = color;
-        ctx.fillRect(x * u, y * u, w * u, h * u);
-    };
+    // Os retângulos são acumulados: primeiro a silhueta escura (1 unidade maior), depois as cores.
+    const parts = [];
+    const rect = (x, y, w, h, color) => parts.push([x, y, w, h, color]);
 
     const step = walking ? Math.round(Math.sin(walkPhase)) : 0;
     const body = sitting ? 3 : 0; // sentado, o tronco desce
@@ -69,6 +66,13 @@ export function drawAvatar(ctx, footX, footY, look, opts = {}) {
         rect(2, -22 + body, 1, 1, shade(look.skin, -0.3));
     }
 
+    ctx.fillStyle = INK;
+    for (const [x, y, w, h] of parts) ctx.fillRect((x - 1) * u, (y - 1) * u, (w + 2) * u, (h + 2) * u);
+    for (const [x, y, w, h, color] of parts) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x * u, y * u, w * u, h * u);
+    }
+
     ctx.restore();
 }
 
@@ -82,27 +86,20 @@ export function renderPreview(canvas, look) {
 }
 
 // Fone de ouvido sobre a cabeça de quem está em call; (x, y) é o topo da cabeça.
+const HEADSET_ARC = [[-12, 2], [-8, -2], [-4, -4], [0, -4], [4, -4], [8, -2], [12, 2]];
+
 export function drawHeadset(ctx, x, y) {
-    ctx.save();
-    ctx.strokeStyle = '#3e3431';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(Math.round(x), Math.round(y) + 10, 14, Math.PI * 1.1, Math.PI * 1.9);
-    ctx.stroke();
-    ctx.fillStyle = '#e8735a';
-    ctx.fillRect(Math.round(x) - 16, Math.round(y) + 4, 5, 8);
-    ctx.fillRect(Math.round(x) + 11, Math.round(y) + 4, 5, 8);
-    ctx.restore();
+    const cx = Math.round(x);
+    const cy = Math.round(y);
+    for (const [dx, dy] of HEADSET_ARC) pixelRect(ctx, cx + dx - 2, cy + dy - 2, 4, 4, '#3e3431');
+    for (const left of [cx - 16, cx + 10]) {
+        pixelRect(ctx, left - PX, cy + 4 - PX, 6 + 2 * PX, 8 + 2 * PX, INK);
+        pixelRect(ctx, left, cy + 4, 6, 8, '#e8735a');
+    }
 }
 
-// Anel pulsante sob os pés de quem está falando.
+// Anel pulsante sob os pés de quem está falando; o raio muda em passos de 2 px.
 export function drawSpeakingRing(ctx, x, y, time) {
-    const r = 14 + 3 * Math.sin(time * 8);
-    ctx.save();
-    ctx.strokeStyle = 'rgba(159, 191, 154, 0.9)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(Math.round(x), Math.round(y), r, r / 2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    const r = 14 + 2 * Math.round(1.5 * Math.sin(time * 8));
+    strokeEllipse(ctx, Math.round(x), Math.round(y), r, r / 2, 'rgba(159, 191, 154, 0.9)');
 }

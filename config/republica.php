@@ -8,6 +8,8 @@
 | Fonte única de paleta do avatar, idiomas e plantas dos quartos. O servidor
 | valida contra este catálogo e a página do jogo o recebe em JSON. Plantas:
 | "." é piso e "x" é vazio; cada linha é um y e cada caractere é um x.
+| "theme" escolhe as texturas do pack de pixel art (nomes do manifesto em
+| resources/js/republica/atlas.js); os hex ficam como paleta de apoio.
 |
 */
 
@@ -90,6 +92,7 @@ return [
             'floor' => '#e9cfae',
             'wall_left' => '#f4b393',
             'wall_right' => '#e09a76',
+            'theme' => ['floor' => 'bege', 'wall_left' => 'laranja', 'wall_right' => 'laranja'],
             'furniture' => [
                 ['type' => 'sofa', 'x' => 3, 'y' => 0],
                 ['type' => 'sofa', 'x' => 4, 'y' => 0],
@@ -121,6 +124,7 @@ return [
             'floor' => '#cfd9bf',
             'wall_left' => '#c6dcc0',
             'wall_right' => '#9fbf9a',
+            'theme' => ['floor' => 'cinza', 'wall_left' => 'listrado', 'wall_right' => 'verde'],
             'furniture' => [
                 ['type' => 'planta', 'x' => 0, 'y' => 0],
                 ['type' => 'planta', 'x' => 1, 'y' => 0],
@@ -153,6 +157,7 @@ return [
             'floor' => '#f2d6c2',
             'wall_left' => '#f2a07b',
             'wall_right' => '#e8735a',
+            'theme' => ['floor' => 'bege', 'wall_left' => 'laranja', 'wall_right' => 'terracota'],
             'furniture' => [
                 ['type' => 'sofa', 'x' => 2, 'y' => 0],
                 ['type' => 'sofa', 'x' => 3, 'y' => 0],
@@ -184,6 +189,7 @@ return [
             'floor' => '#d8c1a0',
             'wall_left' => '#a9c9c0',
             'wall_right' => '#5f8f86',
+            'theme' => ['floor' => 'madeira', 'wall_left' => 'painel', 'wall_right' => 'ardosia'],
             'furniture' => [
                 ['type' => 'estante', 'x' => 1, 'y' => 0],
                 ['type' => 'estante', 'x' => 2, 'y' => 0],
@@ -220,6 +226,7 @@ return [
             'floor' => '#ead9bd',
             'wall_left' => '#f4b393',
             'wall_right' => '#9fbf9a',
+            'theme' => ['floor' => 'bege', 'wall_left' => 'laranja', 'wall_right' => 'verde'],
             'furniture' => [
                 ['type' => 'sofa', 'x' => 4, 'y' => 0],
                 ['type' => 'sofa', 'x' => 5, 'y' => 0],

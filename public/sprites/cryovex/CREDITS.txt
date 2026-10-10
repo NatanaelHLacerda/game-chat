@@ -1,0 +1,11 @@
+Pixel Isometric Modern Interior — versão Free v1.01
+Autor: Cryovex
+https://cryovex.itch.io/pixel-isometric-modern-interior
+
+Licença (resumo da página do pack): uso em projetos comerciais e não comerciais
+permitido, inclusive com modificações. É proibido revender ou redistribuir os
+assets, mesmo modificados. Crédito não é obrigatório, mas é dado aqui e na
+página do jogo.
+
+Os PNGs desta pasta são os originais, sem alterações; o jogo recorta e espelha
+os sprites em tempo de desenho.

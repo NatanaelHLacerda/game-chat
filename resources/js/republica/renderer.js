@@ -1,207 +1,243 @@
+import {
+    FLOOR_H,
+    FLOOR_W,
+    FLOORS,
+    FURNITURE,
+    RUGS,
+    WALL_ANCHOR,
+    WALL_SRC_H,
+    WALL_W,
+    WALLS,
+    drawSprite,
+    facing,
+    seatHeight,
+} from './atlas';
 import { drawAvatar, drawHeadset, drawSpeakingRing, shade } from './avatar';
-import { TILE_H, WALL_H, toScreen } from './iso';
-import { drawFurnitureSprite } from './sprite-furniture';
+import { TILE_H, TILE_W, WALL_H, toScreen } from './iso';
+import { INK, PX, block, fillDiamond, fillEllipse, rect, strokeDiamond, wallFace } from './pixel';
+import { groupRugs } from './rugs';
 
 const VOID = '#2b2523';
 const CREAM = '#f6ead8';
-const INK = '#3e3431';
-const SEAT_HEIGHT = 10;
 const HEAD_TOP = 62;
-
-function polygon(ctx, points, fill, stroke) {
-    ctx.beginPath();
-    points.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-    ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    if (stroke) {
-        ctx.strokeStyle = stroke;
-        ctx.stroke();
-    }
-}
+const DOOR_H = 72;
 
 const up = (p, h) => ({ x: p.x, y: p.y - h });
+const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 
-function tileDiamond(camera, x, y, inset = 0) {
-    return [
-        toScreen(x + inset, y + inset, camera),
-        toScreen(x + 1 - inset, y + inset, camera),
-        toScreen(x + 1 - inset, y + 1 - inset, camera),
-        toScreen(x + inset, y + 1 - inset, camera),
-    ];
-}
-
-// Caixa isométrica em coordenadas de tile fracionárias, elevada `elevation` px.
-export function drawBlock(ctx, camera, x0, y0, x1, y1, elevation, height, color) {
-    const top = elevation + height;
-    const b = toScreen(x1, y0, camera);
-    const c = toScreen(x1, y1, camera);
-    const d = toScreen(x0, y1, camera);
-    const a = toScreen(x0, y0, camera);
-
-    polygon(ctx, [up(d, elevation), up(c, elevation), up(c, top), up(d, top)], shade(color, -0.12));
-    polygon(ctx, [up(c, elevation), up(b, elevation), up(b, top), up(c, top)], shade(color, -0.25));
-    polygon(ctx, [up(a, top), up(b, top), up(c, top), up(d, top)], color);
-}
-
-export function drawRoom(ctx, layout, camera) {
+function floorTest(layout) {
     const rows = layout.tiles.length;
     const cols = layout.tiles[0].length;
-    const isFloor = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows && layout.tiles[y][x] === '.';
-    const [doorX, doorY] = layout.door;
+    return (x, y) => x >= 0 && y >= 0 && x < cols && y < rows && layout.tiles[y][x] === '.';
+}
 
-    // Paredes do fundo
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-            if (!isFloor(x, y)) continue;
+// Bloco de parede (peça 0, 1 ou 2 do grupo) com o vértice inferior da pegada em `bottom`.
+function wallBlock(ctx, atlas, texture, piece, bottom) {
+    const [gx, gy] = WALLS[texture] ?? WALLS.cinza;
+    return drawSprite(ctx, atlas, 'wall', gx + piece * WALL_W, gy, WALL_W, WALL_SRC_H, ...WALL_ANCHOR, bottom.x, bottom.y);
+}
 
-            if (!isFloor(x - 1, y)) {
-                const p1 = toScreen(x, y, camera);
-                const p2 = toScreen(x, y + 1, camera);
-                polygon(ctx, [p1, p2, up(p2, WALL_H), up(p1, WALL_H)], layout.wall_left);
-                ctx.strokeStyle = shade(layout.wall_left, -0.2);
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y - WALL_H);
-                ctx.lineTo(p2.x, p2.y - WALL_H);
-                ctx.stroke();
+function fallbackWall(ctx, p1, p2, color) {
+    wallFace(ctx, p1, p2, WALL_H, color);
+    wallFace(ctx, up(p1, WALL_H), up(p2, WALL_H), PX, INK);
+}
 
-                if (x === doorX && y === doorY) {
-                    const lerp = (t) => ({ x: p1.x + (p2.x - p1.x) * t, y: p1.y + (p2.y - p1.y) * t });
-                    const d1 = lerp(0.2);
-                    const d2 = lerp(0.8);
-                    polygon(ctx, [d1, d2, up(d2, 72), up(d1, 72)], VOID, shade(layout.wall_left, -0.35));
-                }
-            }
+function drawDoor(ctx, layout, camera) {
+    const [x, y] = layout.door;
+    const p1 = toScreen(x, y, camera);
+    const p2 = toScreen(x, y + 1, camera);
+    const step = PX / Math.abs(p2.x - p1.x);
+    wallFace(ctx, lerp(p1, p2, 0.2), lerp(p1, p2, 0.8), DOOR_H + PX, shade(layout.wall_left, -0.35));
+    wallFace(ctx, lerp(p1, p2, 0.2 + step), lerp(p1, p2, 0.8 - step), DOOR_H, VOID);
+}
 
-            if (!isFloor(x, y - 1)) {
-                const p1 = toScreen(x, y, camera);
-                const p2 = toScreen(x + 1, y, camera);
-                polygon(ctx, [p1, p2, up(p2, WALL_H), up(p1, WALL_H)], layout.wall_right);
-                ctx.strokeStyle = shade(layout.wall_right, -0.2);
-                ctx.beginPath();
-                ctx.moveTo(p1.x, p1.y - WALL_H);
-                ctx.lineTo(p2.x, p2.y - WALL_H);
-                ctx.stroke();
+// Paredes ficam por fora do piso: blocos de meio tile, 2 por aresta, do fundo para a frente.
+export function drawWalls(ctx, layout, camera, atlas) {
+    const isFloor = floorTest(layout);
+    const theme = layout.theme ?? {};
+    const sheet = atlas.has('wall');
+
+    if (isFloor(0, 0) && sheet) wallBlock(ctx, atlas, theme.wall_left, 1, toScreen(0, 0, camera));
+
+    for (let y = 0; y < layout.tiles.length; y++) {
+        for (let x = 0; x < layout.tiles[0].length; x++) {
+            if (!isFloor(x, y) || isFloor(x - 1, y)) continue;
+            if (sheet) {
+                wallBlock(ctx, atlas, theme.wall_left, 2, toScreen(x, y + 0.5, camera));
+                wallBlock(ctx, atlas, theme.wall_left, 2, toScreen(x, y + 1, camera));
+            } else {
+                fallbackWall(ctx, toScreen(x, y, camera), toScreen(x, y + 1, camera), layout.wall_left);
             }
         }
     }
 
-    // Piso em xadrez sutil
-    for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-            if (!isFloor(x, y)) continue;
-            const color = (x + y) % 2 ? layout.floor : shade(layout.floor, -0.04);
-            polygon(ctx, tileDiamond(camera, x, y), color, shade(layout.floor, -0.1));
+    for (let x = 0; x < layout.tiles[0].length; x++) {
+        for (let y = 0; y < layout.tiles.length; y++) {
+            if (!isFloor(x, y) || isFloor(x, y - 1)) continue;
+            if (sheet) {
+                wallBlock(ctx, atlas, theme.wall_right, 0, toScreen(x + 0.5, y, camera));
+                wallBlock(ctx, atlas, theme.wall_right, 0, toScreen(x + 1, y, camera));
+            } else {
+                fallbackWall(ctx, toScreen(x, y, camera), toScreen(x + 1, y, camera), layout.wall_right);
+            }
         }
     }
 
-    // Tapetes ficam no chão, fora da ordenação por profundidade
-    for (const item of layout.furniture) {
-        if (item.type !== 'tapete') continue;
-        polygon(ctx, tileDiamond(camera, item.x, item.y, 0.06), (item.x + item.y) % 2 ? '#f4b393' : '#9fbf9a', INK);
+    drawDoor(ctx, layout, camera);
+}
+
+// Piso em amostras de meio tile, varrendo por meias-linhas para as da frente cobrirem a espessura das de trás.
+export function drawFloor(ctx, layout, camera, atlas) {
+    const isFloor = floorTest(layout);
+    const [fx, fy] = FLOORS[layout.theme?.floor] ?? FLOORS.bege;
+    const rows = layout.tiles.length;
+    const cols = layout.tiles[0].length;
+
+    for (let y2 = 0; y2 < rows * 2; y2++) {
+        for (let x2 = 0; x2 < cols * 2; x2++) {
+            if (!isFloor(x2 >> 1, y2 >> 1)) continue;
+            const p = toScreen(x2 / 2, y2 / 2, camera);
+            if (drawSprite(ctx, atlas, 'floor', fx, fy, FLOOR_W, FLOOR_H, FLOOR_W / 2, 0, p.x, p.y)) continue;
+            if (x2 % 2 || y2 % 2) continue;
+            fillDiamond(ctx, p.x, p.y, TILE_W, TILE_H, (x2 + y2) % 4 ? layout.floor : shade(layout.floor, -0.04));
+            strokeDiamond(ctx, p.x, p.y, TILE_W, TILE_H, shade(layout.floor, -0.1));
+        }
     }
 }
 
-export const furnitureDrawers = {
-    sofa(ctx, camera, { x, y }) {
-        drawBlock(ctx, camera, x + 0.08, y + 0.1, x + 0.92, y + 0.92, 0, 12, '#e8735a');
-        drawBlock(ctx, camera, x + 0.08, y + 0.1, x + 0.92, y + 0.32, 12, 16, '#d9694a');
-    },
-    poltrona(ctx, camera, { x, y }) {
-        drawBlock(ctx, camera, x + 0.2, y + 0.2, x + 0.85, y + 0.85, 0, 12, '#9fbf9a');
-        drawBlock(ctx, camera, x + 0.2, y + 0.2, x + 0.85, y + 0.38, 12, 16, '#6f9a78');
-    },
-    mesa(ctx, camera, { x, y }) {
-        drawBlock(ctx, camera, x + 0.42, y + 0.42, x + 0.58, y + 0.58, 0, 18, '#8d5b4c');
-        drawBlock(ctx, camera, x + 0.1, y + 0.1, x + 0.9, y + 0.9, 18, 4, '#c9a27e');
-    },
-    planta(ctx, camera, { x, y }) {
-        drawBlock(ctx, camera, x + 0.32, y + 0.32, x + 0.68, y + 0.68, 0, 16, '#c4573f');
-        const c = toScreen(x + 0.5, y + 0.5, camera);
-        const leaves = [[0, -30, 12, '#6f9a78'], [-9, -22, 9, '#9fbf9a'], [9, -24, 9, '#7fae86'], [0, -40, 8, '#9fbf9a']];
-        for (const [dx, dy, r, color] of leaves) {
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(c.x + dx, c.y + dy, r, 0, Math.PI * 2);
-            ctx.fill();
+// Tapetes ficam no chão, fora da ordenação por profundidade.
+export function drawRugs(ctx, layout, camera, atlas) {
+    for (const g of groupRugs(layout.furniture)) {
+        const rug = g.w === 2 && g.h === 2 ? RUGS['2x2'] : g.w * g.h === 2 ? RUGS['2x1'] : null;
+        const bottom = toScreen(g.x + g.w, g.y + g.h, camera);
+        if (rug && drawSprite(ctx, atlas, rug.sheet, rug.x, rug.y, rug.w, rug.h, rug.w / 2, rug.h - 1, bottom.x, bottom.y, g.h > g.w)) {
+            continue;
         }
-    },
-    luminaria(ctx, camera, { x, y }) {
-        drawBlock(ctx, camera, x + 0.38, y + 0.38, x + 0.62, y + 0.62, 0, 4, INK);
-        drawBlock(ctx, camera, x + 0.47, y + 0.47, x + 0.53, y + 0.53, 4, 52, INK);
-        const c = toScreen(x + 0.5, y + 0.5, camera);
-        const glow = ctx.createRadialGradient(c.x, c.y - 62, 4, c.x, c.y - 62, 44);
-        glow.addColorStop(0, 'rgba(244, 179, 147, 0.45)');
-        glow.addColorStop(1, 'rgba(244, 179, 147, 0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(c.x - 44, c.y - 106, 88, 88);
-        drawBlock(ctx, camera, x + 0.3, y + 0.3, x + 0.7, y + 0.7, 56, 14, CREAM);
-    },
-    estante(ctx, camera, { x, y }) {
-        // Encostada na parede mais próxima (fundo-direita se y <= x, senão fundo-esquerda)
-        const box = y <= x ? [x + 0.05, y + 0.05, x + 0.95, y + 0.45] : [x + 0.05, y + 0.05, x + 0.45, y + 0.95];
-        drawBlock(ctx, camera, ...box, 0, 70, '#8d5b4c');
-        const books = ['#e8735a', '#9fbf9a', '#f2d16b'];
-        books.forEach((color, i) => drawBlock(ctx, camera, box[0] + 0.05, box[1] + 0.05, box[2], box[3], 6 + i * 22, 14, color));
-    },
-};
+        for (let dy = 0; dy < g.h; dy++) {
+            for (let dx = 0; dx < g.w; dx++) {
+                const top = toScreen(g.x + dx, g.y + dy, camera);
+                fillDiamond(ctx, top.x, top.y + PX, TILE_W - 4 * PX, TILE_H - 2 * PX, (g.x + dx + g.y + dy) % 2 ? '#f4b393' : '#9fbf9a');
+                strokeDiamond(ctx, top.x, top.y + PX, TILE_W - 4 * PX, TILE_H - 2 * PX, INK);
+            }
+        }
+    }
+}
+
+function drawPlant(ctx, camera, { x, y }) {
+    const c = toScreen(x + 0.5, y + 0.5, camera);
+    // Vaso: trapézio de 12 px, mais largo em cima
+    for (let i = 0; i < 6; i++) {
+        const half = 10 - (i >> 1) * PX;
+        rect(ctx, c.x - half - PX, c.y - 12 + i * PX, 2 * half + 2 * PX, PX, INK);
+        rect(ctx, c.x - half, c.y - 12 + i * PX, 2 * half, PX, i < 2 ? '#c4573f' : '#a8452f');
+    }
+    rect(ctx, c.x - 8 - PX, c.y, 16 + 2 * PX, PX, INK);
+    const leaves = [[0, -30, 12, '#6f9a78'], [-10, -22, 10, '#9fbf9a'], [10, -24, 10, '#7fae86'], [0, -40, 8, '#9fbf9a']];
+    for (const [dx, dy, r] of leaves) fillEllipse(ctx, c.x + dx, c.y + dy, r + PX, r + PX, INK);
+    for (const [dx, dy, r, color] of leaves) fillEllipse(ctx, c.x + dx, c.y + dy, r, r, color);
+}
+
+function drawLamp(ctx, camera, { x, y }) {
+    const c = toScreen(x + 0.5, y + 0.5, camera);
+    fillEllipse(ctx, c.x, c.y - 62, 40, 40, 'rgba(244, 179, 147, 0.15)');
+    fillEllipse(ctx, c.x, c.y - 62, 28, 28, 'rgba(244, 179, 147, 0.25)');
+    rect(ctx, c.x - 6, c.y - 4, 12, 4, INK);
+    rect(ctx, c.x - 2, c.y - 56, 4, 52, INK);
+    // Cúpula: trapézio creme de 14 px, mais estreito em cima
+    for (let i = 0; i < 7; i++) {
+        const half = 8 + (i >> 1) * PX;
+        const edge = i === 0 || i === 6;
+        rect(ctx, c.x - half - PX, c.y - 70 + i * PX, 2 * half + 2 * PX, PX, INK);
+        if (!edge) rect(ctx, c.x - half, c.y - 70 + i * PX, 2 * half, PX, i < 3 ? CREAM : shade(CREAM, -0.08));
+    }
+}
+
+export function drawFurniture(ctx, camera, item, atlas) {
+    if (item.type === 'planta') return drawPlant(ctx, camera, item);
+    if (item.type === 'luminaria') return drawLamp(ctx, camera, item);
+
+    const sprite = FURNITURE[item.type];
+    if (!sprite) return;
+    const bottom = toScreen(item.x + 1, item.y + 1, camera);
+    const flip = facing(item) !== sprite.facing;
+    if (drawSprite(ctx, atlas, sprite.sheet, sprite.x, sprite.y, sprite.w, sprite.h, sprite.w / 2, sprite.h - 1, bottom.x, bottom.y, flip)) return;
+
+    const c = toScreen(item.x + 0.5, item.y + 0.5, camera);
+    block(ctx, c.x - 16, c.y - 24, 32, 28, '#c9a27e');
+}
 
 function drawNameTag(ctx, x, y, name) {
     ctx.font = 'bold 11px Verdana, Tahoma, sans-serif';
-    const w = Math.ceil(ctx.measureText(name).width) + 12;
+    let w = Math.ceil(ctx.measureText(name).width) + 12;
+    w += w % 2;
+    const h = 18;
     const left = Math.round(x - w / 2);
-    ctx.fillStyle = CREAM;
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(left + 0.5, Math.round(y) + 0.5, w, 17, 5);
-    ctx.fill();
-    ctx.stroke();
+    const top = Math.round(y);
+    // Contorno sem os cantos: a moldura fica chanfrada
+    rect(ctx, left + PX, top, w - 2 * PX, PX, INK);
+    rect(ctx, left + PX, top + h - PX, w - 2 * PX, PX, INK);
+    rect(ctx, left, top + PX, PX, h - 2 * PX, INK);
+    rect(ctx, left + w - PX, top + PX, PX, h - 2 * PX, INK);
+    rect(ctx, left + PX, top + PX, w - 2 * PX, h - 2 * PX, CREAM);
     ctx.fillStyle = INK;
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, left + 6, Math.round(y) + 9);
+    ctx.fillText(name, left + 6, top + 9);
+}
+
+// Tipo de móvel (não tapete) em cada tile, memorizado por layout.
+const typesByLayout = new WeakMap();
+function typeAt(layout, x, y) {
+    let types = typesByLayout.get(layout);
+    if (!types) {
+        types = new Map();
+        for (const item of layout.furniture) {
+            const key = `${item.x},${item.y}`;
+            if (item.type !== 'tapete' && !types.has(key)) types.set(key, item.type);
+        }
+        typesByLayout.set(layout, types);
+    }
+    return types.get(`${x},${y}`);
 }
 
 // Posição de tela dos pés de um avatar (posição interpolada).
-export function avatarFoot(avatar, camera, grid) {
+export function avatarFoot(avatar, camera, grid, layout) {
     const p = toScreen(avatar.render.x, avatar.render.y, camera);
-    const lift = avatar.sitting && grid.seat(avatar.pos.x, avatar.pos.y) ? SEAT_HEIGHT : 0;
+    const seated = layout && avatar.sitting && grid.seat(avatar.pos.x, avatar.pos.y);
+    const lift = seated ? seatHeight(typeAt(layout, avatar.pos.x, avatar.pos.y)) : 0;
 
     return { x: p.x, y: p.y + TILE_H / 2 - lift };
 }
 
 /**
- * state: { layout, camera, grid, furnitureTypes, avatars, hoverTile, hoverAvatarId, width, height, decorate, time }
+ * state: { layout, camera, grid, avatars, hoverTile, hoverAvatarId, width, height, decorate, atlas, time }
  */
 export function drawScene(ctx, state) {
-    const { layout, camera, grid, avatars } = state;
+    const { layout, camera, grid, avatars, atlas } = state;
 
     ctx.fillStyle = VOID;
     ctx.fillRect(0, 0, state.width, state.height);
-    drawRoom(ctx, layout, camera);
+    if (!atlas) return;
+
+    drawWalls(ctx, layout, camera, atlas);
+    drawFloor(ctx, layout, camera, atlas);
+    drawRugs(ctx, layout, camera, atlas);
 
     if (state.hoverTile && grid.walkable(state.hoverTile.x, state.hoverTile.y)) {
-        ctx.lineWidth = 2;
-        polygon(ctx, tileDiamond(camera, state.hoverTile.x, state.hoverTile.y, 0.04), 'rgba(246, 234, 216, 0.25)', CREAM);
-        ctx.lineWidth = 1;
+        const top = toScreen(state.hoverTile.x, state.hoverTile.y, camera);
+        fillDiamond(ctx, top.x, top.y, TILE_W, TILE_H, 'rgba(246, 234, 216, 0.25)');
+        strokeDiamond(ctx, top.x, top.y, TILE_W, TILE_H, CREAM);
     }
 
     const items = [];
     for (const item of layout.furniture) {
-        if (item.type === 'tapete' || !furnitureDrawers[item.type]) continue;
-        items.push({
-            depth: item.x + item.y,
-            draw: () => {
-                if (state.sprites && drawFurnitureSprite(ctx, camera, item, state.sprites)) return;
-                furnitureDrawers[item.type](ctx, camera, item);
-            },
-        });
+        if (item.type === 'tapete') continue;
+        items.push({ depth: item.x + item.y, draw: () => drawFurniture(ctx, camera, item, atlas) });
     }
     for (const avatar of avatars) {
         items.push({
             depth: avatar.render.x + avatar.render.y + 0.5,
             draw: () => {
-                const foot = avatarFoot(avatar, camera, grid);
+                const foot = avatarFoot(avatar, camera, grid, layout);
                 const marks = state.decorate?.(avatar.member.id) ?? {};
                 if (marks.speaking) drawSpeakingRing(ctx, foot.x, foot.y, state.time ?? 0);
                 drawAvatar(ctx, foot.x, foot.y, avatar.member.look, {
@@ -219,7 +255,7 @@ export function drawScene(ctx, state) {
 
     const hovered = avatars.find((a) => a.member.id === state.hoverAvatarId);
     if (hovered) {
-        const foot = avatarFoot(hovered, camera, grid);
+        const foot = avatarFoot(hovered, camera, grid, layout);
         drawNameTag(ctx, foot.x, foot.y - 82, hovered.member.name);
     }
 }
