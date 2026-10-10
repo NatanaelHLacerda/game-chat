@@ -1,15 +1,15 @@
 const STATUS = {
-    initialized: 'conectando…',
-    connecting: 'reconectando…',
-    unavailable: 'reconectando…',
+    initialized: 'connecting…',
+    connecting: 'reconnecting…',
+    unavailable: 'reconnecting…',
     connected: 'online',
-    disconnected: 'desconectado',
-    failed: 'sem conexão',
+    disconnected: 'disconnected',
+    failed: 'offline',
 };
 
 export function watchConnection(statusEl) {
     const connection = window.Echo.connector.pusher.connection;
-    statusEl.textContent = 'conectando…';
+    statusEl.textContent = 'connecting…';
     connection.bind('state_change', ({ current }) => {
         statusEl.textContent = STATUS[current] ?? current;
     });

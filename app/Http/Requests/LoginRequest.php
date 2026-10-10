@@ -42,7 +42,7 @@ class LoginRequest extends FormRequest
         if (! Auth::attempt(['name_key' => $nameKey, 'password' => $this->string('password')], remember: true)) {
             RateLimiter::hit($throttleKey);
 
-            throw ValidationException::withMessages(['name' => 'Nome ou senha incorretos.']);
+            throw ValidationException::withMessages(['name' => 'Wrong name or password.']);
         }
 
         RateLimiter::clear($throttleKey);

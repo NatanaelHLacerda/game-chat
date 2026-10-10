@@ -37,16 +37,16 @@ return [
     ],
 
     'languages' => [
-        'pt' => ['name' => 'Português', 'flag' => ['#009c3b', '#ffdf00']],
-        'en' => ['name' => 'Inglês', 'flag' => ['#012169', '#ffffff', '#c8102e']],
-        'es' => ['name' => 'Espanhol', 'flag' => ['#aa151b', '#f1bf00', '#aa151b']],
-        'fr' => ['name' => 'Francês', 'flag' => ['#0055a4', '#ffffff', '#ef4135']],
-        'de' => ['name' => 'Alemão', 'flag' => ['#000000', '#dd0000', '#ffce00']],
-        'it' => ['name' => 'Italiano', 'flag' => ['#009246', '#ffffff', '#ce2b37']],
-        'ja' => ['name' => 'Japonês', 'flag' => ['#ffffff', '#bc002d', '#ffffff']],
-        'ko' => ['name' => 'Coreano', 'flag' => ['#ffffff', '#003478', '#c60c30']],
-        'zh' => ['name' => 'Chinês', 'flag' => ['#de2910', '#ffde00', '#de2910']],
-        'ru' => ['name' => 'Russo', 'flag' => ['#ffffff', '#0039a6', '#d52b1e']],
+        'pt' => ['name' => 'Portuguese', 'flag' => ['#009c3b', '#ffdf00']],
+        'en' => ['name' => 'English', 'flag' => ['#012169', '#ffffff', '#c8102e']],
+        'es' => ['name' => 'Spanish', 'flag' => ['#aa151b', '#f1bf00', '#aa151b']],
+        'fr' => ['name' => 'French', 'flag' => ['#0055a4', '#ffffff', '#ef4135']],
+        'de' => ['name' => 'German', 'flag' => ['#000000', '#dd0000', '#ffce00']],
+        'it' => ['name' => 'Italian', 'flag' => ['#009246', '#ffffff', '#ce2b37']],
+        'ja' => ['name' => 'Japanese', 'flag' => ['#ffffff', '#bc002d', '#ffffff']],
+        'ko' => ['name' => 'Korean', 'flag' => ['#ffffff', '#003478', '#c60c30']],
+        'zh' => ['name' => 'Chinese', 'flag' => ['#de2910', '#ffde00', '#de2910']],
+        'ru' => ['name' => 'Russian', 'flag' => ['#ffffff', '#0039a6', '#d52b1e']],
     ],
 
     'max_languages' => 3,
@@ -82,7 +82,7 @@ return [
     'layouts' => [
 
         'sala' => [
-            'name' => 'Sala',
+            'name' => 'Lounge',
             'tiles' => [
                 '..........',
                 '..........',
@@ -114,7 +114,7 @@ return [
         ],
 
         'jardim' => [
-            'name' => 'Jardim',
+            'name' => 'Garden',
             'tiles' => [
                 '..........',
                 '..........',
@@ -147,7 +147,7 @@ return [
         ],
 
         'por-do-sol' => [
-            'name' => 'Pôr do sol',
+            'name' => 'Sunset',
             'tiles' => [
                 '..........',
                 '..........',
@@ -179,7 +179,7 @@ return [
         ],
 
         'estudio' => [
-            'name' => 'Estúdio',
+            'name' => 'Studio',
             'tiles' => [
                 '..........',
                 '..........',
@@ -212,7 +212,7 @@ return [
         ],
 
         'sala-de-estar' => [
-            'name' => 'Sala de estar',
+            'name' => 'Living room',
             'tiles' => [
                 '................',
                 '................',

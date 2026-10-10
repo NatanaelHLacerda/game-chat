@@ -20,11 +20,11 @@ test('platformOf reconhece iPhone, iPad "Mac" com toque, Android e desktop', () 
 
 test('mensagem de microfone bloqueado por plataforma', () => {
     const denied = { name: 'NotAllowedError' };
-    assert.match(micErrorMessage(denied, 'ios'), /Safari.*Ajustes do Site/);
-    assert.match(micErrorMessage(denied, 'android'), /Chrome.*Permissões/);
+    assert.match(micErrorMessage(denied, 'ios'), /Safari.*Website Settings/);
+    assert.match(micErrorMessage(denied, 'android'), /Chrome.*Permissions/);
     assert.equal(
         micErrorMessage(denied),
-        'O navegador bloqueou o microfone. Clique no cadeado ao lado do endereço, permita o microfone e tente de novo.',
+        'Your browser blocked the microphone. Click the lock next to the address, allow the microphone and try again.',
     );
-    assert.equal(micErrorMessage({ name: 'NotFoundError' }, 'ios'), 'Nenhum microfone encontrado. Conecte um microfone e tente de novo.');
+    assert.equal(micErrorMessage({ name: 'NotFoundError' }, 'ios'), 'No microphone found. Connect a microphone and try again.');
 });

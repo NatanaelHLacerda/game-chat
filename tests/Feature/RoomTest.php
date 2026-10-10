@@ -19,13 +19,13 @@ class RoomTest extends TestCase
         $this->assertCount(1, $common);
         $this->assertNull($common->first()->user_id);
         $this->assertSame(config('republica.common_layout'), $common->first()->layout);
-        $this->assertSame('Sala de estar', $common->first()->displayName());
+        $this->assertSame('Living room', $common->first()->displayName());
     }
 
     public function test_private_room_display_name_uses_owner(): void
     {
         $room = Room::factory()->for(User::factory()->state(['name' => 'Bruno', 'name_key' => 'bruno']), 'owner')->create();
 
-        $this->assertSame('Quarto de Bruno', $room->displayName());
+        $this->assertSame("Bruno's room", $room->displayName());
     }
 }

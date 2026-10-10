@@ -1,6 +1,6 @@
-@php($labels = ['skin' => 'Pele', 'hair' => 'Cabelo', 'shirt' => 'Camisa', 'pants' => 'Calça'])
+@php($labels = ['skin' => 'Skin', 'hair' => 'Hair', 'shirt' => 'Shirt', 'pants' => 'Pants'])
 <fieldset class="picker" data-look-picker>
-    <legend>Aparência</legend>
+    <legend>Appearance</legend>
     @foreach ($palette as $part => $colors)
         <div class="swatches">
             <span>{{ $labels[$part] }}</span>
@@ -11,8 +11,8 @@
             @endforeach
         </div>
     @endforeach
-    @php($styleLabels = ['hair_style' => 'Cabelo', 'top_style' => 'Roupa'])
-    @php($optionLabels = ['curto' => 'Curto', 'medio' => 'Médio', 'cacheado' => 'Cacheado', 'longo' => 'Longo', 'camiseta' => 'Camiseta', 'regata' => 'Regata', 'moletom' => 'Moletom'])
+    @php($styleLabels = ['hair_style' => 'Hairstyle', 'top_style' => 'Top'])
+    @php($optionLabels = ['curto' => 'Short', 'medio' => 'Medium', 'cacheado' => 'Curly', 'longo' => 'Long', 'camiseta' => 'T-shirt', 'regata' => 'Tank top', 'moletom' => 'Hoodie'])
     @foreach ($styles as $style => $options)
         <div class="swatches">
             <span>{{ $styleLabels[$style] }}</span>

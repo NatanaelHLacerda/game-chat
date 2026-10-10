@@ -39,7 +39,7 @@ class Room extends Model
 
     public function displayName(): string
     {
-        return $this->isCommon() ? 'Sala de estar' : 'Quarto de '.$this->owner->name;
+        return $this->isCommon() ? 'Living room' : $this->owner->name."'s room";
     }
 
     public static function commonRoom(): Room

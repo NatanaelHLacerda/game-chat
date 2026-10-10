@@ -87,7 +87,7 @@ export class CallManager {
     }
 
     nameOf(id) {
-        return this.session?.avatars.get(id)?.member.name ?? 'Alguém';
+        return this.session?.avatars.get(id)?.member.name ?? 'Someone';
     }
 
     inRoom(id) {
@@ -107,18 +107,18 @@ export class CallManager {
 
         const theirCall = this.registry.callOf(member.id);
         if (this.myCallId && theirCall?.id === this.myCallId) return null;
-        if (this.myCallId) return { label: 'Conversar', disabled: true, hint: 'Você já está numa conversa' };
-        if (this.outgoing) return { label: 'Chamando…', disabled: true, hint: null };
+        if (this.myCallId) return { label: 'Talk', disabled: true, hint: 'You are already in a call' };
+        if (this.outgoing) return { label: 'Calling…', disabled: true, hint: null };
 
         if (theirCall) {
-            const label = 'Pedir para participar';
-            if (theirCall.members.size >= this.voice.max_participants) return { label, disabled: true, hint: 'Conversa cheia' };
-            if (this.cooldownLeft(`call:${theirCall.id}`)) return { label, disabled: true, hint: 'Aguarde 1 min' };
+            const label = 'Ask to join';
+            if (theirCall.members.size >= this.voice.max_participants) return { label, disabled: true, hint: 'Call is full' };
+            if (this.cooldownLeft(`call:${theirCall.id}`)) return { label, disabled: true, hint: 'Wait 1 min' };
             return { label, disabled: false, hint: null, onClick: () => this.requestJoin(member) };
         }
 
-        if (this.cooldownLeft(`user:${member.id}`)) return { label: 'Conversar', disabled: true, hint: 'Aguarde 1 min' };
-        return { label: 'Conversar', disabled: false, hint: null, onClick: () => this.requestCall(member) };
+        if (this.cooldownLeft(`user:${member.id}`)) return { label: 'Talk', disabled: true, hint: 'Wait 1 min' };
+        return { label: 'Talk', disabled: false, hint: null, onClick: () => this.requestCall(member) };
     }
 
     async ensureMicrophone() {
@@ -160,7 +160,7 @@ export class CallManager {
             timer: setTimeout(() => this.expireOutgoing(), this.voice.request_timeout * 1000),
         };
         this.send('call-request', { to: member.id, requestId });
-        this.ui.showOutgoing({ text: `Chamando ${member.name}…`, onCancel: () => this.cancelOutgoing() });
+        this.ui.showOutgoing({ text: `Calling ${member.name}…`, onCancel: () => this.cancelOutgoing() });
         this.onChange();
     }
 
@@ -180,7 +180,7 @@ export class CallManager {
             timer: setTimeout(() => this.expireOutgoing(), this.voice.request_timeout * 1000),
         };
         this.send('join-request', { callId: call.id, requestId });
-        this.ui.showOutgoing({ text: 'Pedindo para participar…', onCancel: () => this.cancelOutgoing() });
+        this.ui.showOutgoing({ text: 'Asking to join…', onCancel: () => this.cancelOutgoing() });
         this.onChange();
     }
 
@@ -206,7 +206,7 @@ export class CallManager {
         if (!outgoing) return;
         this.send('call-cancel', { requestId: outgoing.requestId, to: outgoing.to, callId: outgoing.callId });
         if (!silent) {
-            this.ui.toast(outgoing.kind === 'call' ? `${this.nameOf(outgoing.to)} não respondeu.` : 'Ninguém respondeu ao pedido.');
+            this.ui.toast(outgoing.kind === 'call' ? `${this.nameOf(outgoing.to)} didn't answer.` : 'Nobody answered your request.');
         }
         this.releaseIdleMicrophone();
         this.onChange();
@@ -270,7 +270,7 @@ export class CallManager {
             if (member) this.requestJoin(member);
         } else {
             this.startCooldown(`user:${id}`);
-            this.ui.toast(reason === 'mic' ? `${this.nameOf(id)} não conseguiu ligar o microfone.` : `${this.nameOf(id)} recusou a conversa.`);
+            this.ui.toast(reason === 'mic' ? `${this.nameOf(id)} couldn't turn on their microphone.` : `${this.nameOf(id)} declined the call.`);
             this.releaseIdleMicrophone();
         }
         this.onChange();
@@ -309,7 +309,7 @@ export class CallManager {
             this.joinCallLocally(callId, [...known, this.me.id]);
         } else {
             this.startCooldown(`call:${callId}`);
-            this.ui.toast(reason === 'full' ? 'A conversa está cheia.' : 'Seu pedido para participar foi recusado.');
+            this.ui.toast(reason === 'full' ? 'The call is full.' : 'Your request to join was declined.');
             this.releaseIdleMicrophone();
         }
         this.onChange();
@@ -320,7 +320,7 @@ export class CallManager {
         this.registry.addMember(callId, id);
 
         if (this.myCallId === callId) {
-            this.ui.toast(`${this.nameOf(id)} entrou na conversa.`);
+            this.ui.toast(`${this.nameOf(id)} joined the call.`);
             if (CallRegistry.shouldOffer(this.me.id, id)) this.mesh.connect(id);
             this.refreshPanel();
         }
@@ -406,7 +406,7 @@ export class CallManager {
         if (!call) return;
 
         this.ui.showCallPanel({
-            participants: [...call.members].map((id) => (id === this.me.id ? this.me : this.session.avatars.get(id)?.member ?? { id, name: 'Alguém' })),
+            participants: [...call.members].map((id) => (id === this.me.id ? this.me : this.session.avatars.get(id)?.member ?? { id, name: 'Someone' })),
             meId: this.me.id,
             muted: this.muted,
             speaking: this.speaking,
@@ -466,7 +466,7 @@ export class CallManager {
 
     // Conexão caiu (ex.: celular em segundo plano): a call local acabou; a pessoa pede de novo se quiser.
     connectionLost() {
-        if (this.myCallId) this.endLocalCall('A conversa caiu enquanto você estava fora. Peça para entrar de novo.');
+        if (this.myCallId) this.endLocalCall('The call dropped while you were away. Ask to join again.');
     }
 
     audioBlockedNow() {
@@ -508,9 +508,9 @@ export class CallManager {
         this.mesh.close(id);
 
         if (result && result.id === this.myCallId) {
-            if (result.ended) this.endLocalCall('A conversa terminou.');
+            if (result.ended) this.endLocalCall('The call ended.');
             else {
-                this.ui.toast(`${this.nameOf(id)} saiu da conversa.`);
+                this.ui.toast(`${this.nameOf(id)} left the call.`);
                 this.refreshPanel();
             }
         } else if (result?.ended) {
@@ -525,7 +525,7 @@ export class CallManager {
     }
 
     handlePeerFailed(id) {
-        this.ui.toast(`A conexão de áudio com ${this.nameOf(id)} caiu.`);
+        this.ui.toast(`The audio connection with ${this.nameOf(id)} dropped.`);
         this.handleDeparture(id);
     }
 

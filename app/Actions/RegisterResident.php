@@ -38,7 +38,7 @@ class RegisterResident
                 return $user;
             });
         } catch (UniqueConstraintViolationException) {
-            throw ValidationException::withMessages(['name' => 'Esse nome já tem dono.']);
+            throw ValidationException::withMessages(['name' => 'That name is already taken.']);
         }
 
         Log::info('resident.registered', ['user_id' => $user->id, 'layout' => $user->room->layout]);

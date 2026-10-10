@@ -1,6 +1,6 @@
 <fieldset class="picker" data-language-picker data-max="{{ config('republica.max_languages') }}">
-    <legend>Idiomas</legend>
-    @foreach (['speaks' => 'Falo', 'practices' => 'Quero praticar'] as $field => $label)
+    <legend>Languages</legend>
+    @foreach (['speaks' => 'I speak', 'practices' => 'I want to practice'] as $field => $label)
         <div class="languages" data-language-list="{{ $field }}">
             <span>{{ $label }}</span>
             <div class="language-options">

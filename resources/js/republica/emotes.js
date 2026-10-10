@@ -5,17 +5,17 @@ import { INK, PX, rect } from './pixel.js';
 
 // Ordem = atalhos 1–9 no computador. frame: balão da folha; anim/draw: casos especiais.
 export const EMOTES = [
-    { type: 'feliz', label: 'Feliz', icon: '😊', frame: 1 },
-    { type: 'sorriso', label: 'Sorriso', icon: '🙂', frame: 2 },
-    { type: 'rindo', label: 'Rindo', icon: '😆', frame: 3 },
-    { type: 'bravo', label: 'Bravo', icon: '😠', frame: 4 },
-    { type: 'irritado', label: 'Irritado', icon: '😒', frame: 5 },
-    { type: 'neutro', label: 'Neutro', icon: '😐', frame: 6 },
-    { type: 'pensando', label: 'Pensando', icon: '💭', frame: 0 },
-    { type: 'atencao', label: 'Atenção', icon: '❗', anim: 'exclamation' },
-    { type: 'oi', label: 'Oi', icon: '👋', draw: 'hand' },
-    { type: 'amei', label: 'Amei', icon: '❤️', draw: 'heart' },
-    { type: 'musica', label: 'Música', icon: '🎵', draw: 'note' },
+    { type: 'feliz', label: 'Happy', icon: '😊', frame: 1 },
+    { type: 'sorriso', label: 'Smile', icon: '🙂', frame: 2 },
+    { type: 'rindo', label: 'Laughing', icon: '😆', frame: 3 },
+    { type: 'bravo', label: 'Angry', icon: '😠', frame: 4 },
+    { type: 'irritado', label: 'Annoyed', icon: '😒', frame: 5 },
+    { type: 'neutro', label: 'Neutral', icon: '😐', frame: 6 },
+    { type: 'pensando', label: 'Thinking', icon: '💭', frame: 0 },
+    { type: 'atencao', label: 'Attention', icon: '❗', anim: 'exclamation' },
+    { type: 'oi', label: 'Hi', icon: '👋', draw: 'hand' },
+    { type: 'amei', label: 'Love it', icon: '❤️', draw: 'heart' },
+    { type: 'musica', label: 'Music', icon: '🎵', draw: 'note' },
 ];
 
 const BY_TYPE = new Map(EMOTES.map((e) => [e.type, e]));

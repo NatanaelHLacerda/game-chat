@@ -90,8 +90,8 @@ class HotelTest extends TestCase
             ->assertOk()
             ->assertJsonCount(3)
             ->assertJsonPath('0.kind', 'common')
-            ->assertJsonPath('0.name', 'Sala de estar')
-            ->assertJsonPath('1.name', 'Quarto de ana');
+            ->assertJsonPath('0.name', 'Living room')
+            ->assertJsonPath('1.name', "ana's room");
     }
 
     public function test_rooms_endpoint_requires_authentication(): void

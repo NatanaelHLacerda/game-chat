@@ -8,9 +8,9 @@ export async function getMicrophone() {
 }
 
 const BLOCKED = {
-    ios: 'O Safari bloqueou o microfone. Toque em "aA" na barra de endereço, abra "Ajustes do Site", permita o Microfone e tente de novo.',
-    android: 'O Chrome bloqueou o microfone. Toque no ícone ao lado do endereço, abra "Permissões", permita o Microfone e tente de novo.',
-    desktop: 'O navegador bloqueou o microfone. Clique no cadeado ao lado do endereço, permita o microfone e tente de novo.',
+    ios: 'Safari blocked the microphone. Tap "aA" in the address bar, open "Website Settings", allow the Microphone and try again.',
+    android: 'Chrome blocked the microphone. Tap the icon next to the address, open "Permissions", allow the Microphone and try again.',
+    desktop: 'Your browser blocked the microphone. Click the lock next to the address, allow the microphone and try again.',
 };
 
 export function micErrorMessage(error, platform = 'desktop') {
@@ -20,13 +20,13 @@ export function micErrorMessage(error, platform = 'desktop') {
             return BLOCKED[platform] ?? BLOCKED.desktop;
         case 'NotFoundError':
         case 'OverconstrainedError':
-            return 'Nenhum microfone encontrado. Conecte um microfone e tente de novo.';
+            return 'No microphone found. Connect a microphone and try again.';
         case 'NotReadableError':
-            return 'O microfone está sendo usado por outro programa. Feche-o e tente de novo.';
+            return 'The microphone is being used by another program. Close it and try again.';
         case 'insecure':
-            return 'A voz só funciona em endereço seguro (https ou localhost).';
+            return 'Voice only works on a secure address (https or localhost).';
         default:
-            return 'Não foi possível ligar o microfone.';
+            return 'Could not turn on the microphone.';
     }
 }
 

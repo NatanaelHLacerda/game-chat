@@ -61,7 +61,7 @@ class RegistrationTest extends TestCase
         $this->post('/sair');
 
         $this->post('/cadastro', $this->payload(['name' => '  ana ']))
-            ->assertSessionHasErrors(['name_key' => 'Esse nome já tem dono.']);
+            ->assertSessionHasErrors(['name_key' => 'That name is already taken.']);
         $this->assertSame(1, User::count());
     }
 
@@ -73,13 +73,13 @@ class RegistrationTest extends TestCase
     public function test_more_than_three_languages_is_rejected(): void
     {
         $this->post('/cadastro', $this->payload(['practices' => ['en', 'es', 'fr', 'de']]))
-            ->assertSessionHasErrors(['practices' => 'No máximo 3 idiomas.']);
+            ->assertSessionHasErrors(['practices' => 'At most 3 languages.']);
     }
 
     public function test_same_language_cannot_be_spoken_and_practiced(): void
     {
         $this->post('/cadastro', $this->payload(['speaks' => ['pt', 'en'], 'practices' => ['en']]))
-            ->assertSessionHasErrors(['practices' => 'Escolha idiomas que você ainda quer praticar.']);
+            ->assertSessionHasErrors(['practices' => 'Choose languages you still want to practice.']);
     }
 
     public function test_color_outside_palette_is_rejected(): void

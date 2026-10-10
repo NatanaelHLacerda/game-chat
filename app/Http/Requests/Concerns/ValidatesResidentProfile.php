@@ -45,12 +45,12 @@ trait ValidatesResidentProfile
     protected function profileMessages(): array
     {
         return [
-            'speaks.required' => 'Escolha pelo menos um idioma.',
-            'speaks.min' => 'Escolha pelo menos um idioma.',
-            'practices.required' => 'Escolha pelo menos um idioma.',
-            'practices.min' => 'Escolha pelo menos um idioma.',
-            'speaks.max' => 'No máximo 3 idiomas.',
-            'practices.max' => 'No máximo 3 idiomas.',
+            'speaks.required' => 'Choose at least one language.',
+            'speaks.min' => 'Choose at least one language.',
+            'practices.required' => 'Choose at least one language.',
+            'practices.min' => 'Choose at least one language.',
+            'speaks.max' => 'At most 3 languages.',
+            'practices.max' => 'At most 3 languages.',
         ];
     }
 
@@ -60,7 +60,7 @@ trait ValidatesResidentProfile
         $practices = (array) $this->input('practices', []);
 
         if (array_intersect($speaks, $practices) !== []) {
-            $validator->errors()->add('practices', 'Escolha idiomas que você ainda quer praticar.');
+            $validator->errors()->add('practices', 'Choose languages you still want to practice.');
         }
     }
 }

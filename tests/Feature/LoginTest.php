@@ -27,7 +27,7 @@ class LoginTest extends TestCase
     public function test_wrong_password_fails(): void
     {
         $this->post('/entrar', ['name' => 'ana', 'password' => 'errada'])
-            ->assertSessionHasErrors(['name' => 'Nome ou senha incorretos.']);
+            ->assertSessionHasErrors(['name' => 'Wrong name or password.']);
 
         $this->assertGuest();
     }

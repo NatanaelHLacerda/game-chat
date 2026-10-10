@@ -1,11 +1,11 @@
 @extends('layouts.app', ['scripts' => ['resources/js/profile-form.js']])
 
-@section('title', 'Perfil · República')
+@section('title', 'Profile · República')
 @section('body-class', 'lobby')
 
 @section('content')
 <main class="window auth wide">
-    <div class="titlebar">Perfil de {{ $user->name }}</div>
+    <div class="titlebar">{{ $user->name }}'s profile</div>
     <form method="POST" action="{{ route('profile.update') }}" class="content profile-form">
         @csrf
         @method('PUT')
@@ -16,8 +16,8 @@
 
             @if ($errors->any()) <p class="error">{{ $errors->first() }}</p> @endif
             <div class="actions">
-                <a class="btn" href="{{ route('hotel') }}">Voltar</a>
-                <button class="btn btn-primary">Salvar</button>
+                <a class="btn" href="{{ route('hotel') }}">Back</a>
+                <button class="btn btn-primary">Save</button>
             </div>
         </div>
     </form>

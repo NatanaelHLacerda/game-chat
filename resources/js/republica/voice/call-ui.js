@@ -41,12 +41,12 @@ export class CallUi {
 
         const title = document.createElement('div');
         title.className = 'titlebar';
-        title.textContent = kind === 'join' ? 'Pedido para participar' : 'Pedido de conversa';
+        title.textContent = kind === 'join' ? 'Request to join' : 'Call request';
 
         const body = document.createElement('div');
         body.className = 'content';
         const text = document.createElement('p');
-        text.textContent = kind === 'join' ? `${fromName} quer participar da conversa` : `${fromName} quer conversar com você`;
+        text.textContent = kind === 'join' ? `${fromName} wants to join the call` : `${fromName} wants to talk with you`;
         const countdown = document.createElement('p');
         countdown.className = 'countdown';
         const actions = document.createElement('div');
@@ -85,11 +85,11 @@ export class CallUi {
         this.handlers.onLeave = onLeave;
         this.participants.replaceChildren(...participants.map((member) => {
             const item = document.createElement('li');
-            item.textContent = member.id === meId ? `${member.name} (você)` : member.name;
+            item.textContent = member.id === meId ? `${member.name} (you)` : member.name;
             item.classList.toggle('speaking', speaking.has(member.id));
             return item;
         }));
-        this.muteButton.textContent = muted ? 'Ativar microfone' : 'Silenciar';
+        this.muteButton.textContent = muted ? 'Unmute' : 'Mute';
         this.panel.classList.remove('hidden');
     }
 

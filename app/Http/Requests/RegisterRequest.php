@@ -40,9 +40,9 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name_key.unique' => 'Esse nome já tem dono.',
-            'name.regex' => 'Use letras, números, espaço, _ - ou .',
-            'password.confirmed' => 'As senhas não conferem.',
+            'name_key.unique' => 'That name is already taken.',
+            'name.regex' => 'Use letters, numbers, spaces, _ - or .',
+            'password.confirmed' => 'The passwords don\'t match.',
             ...$this->profileMessages(),
         ];
     }

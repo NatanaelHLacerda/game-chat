@@ -236,7 +236,7 @@ export class Game {
             this.session.emote(emote.type);
             if (this.mobileQuery.matches) this.emotePicker.classList.add('hidden');
         })));
-        const dances = [...DANCES.map((n) => [n, DANCE_NAMES[n]]), [0, 'Parar']];
+        const dances = [...DANCES.map((n) => [n, DANCE_NAMES[n]]), [0, 'Stop']];
         document.getElementById('dance-grid').replaceChildren(...dances.map(([n, name]) => {
             const el = button(name, name, () => {
                 this.session.dance(n);

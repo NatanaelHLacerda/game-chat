@@ -23,6 +23,6 @@ class ProfileController extends Controller
     {
         $request->user()->update($request->validated());
 
-        return redirect()->route('hotel')->with('status', 'Perfil atualizado.');
+        return redirect()->route('hotel')->with('status', 'Profile updated.');
     }
 }

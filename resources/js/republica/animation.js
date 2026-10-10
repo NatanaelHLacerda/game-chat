@@ -1,6 +1,6 @@
 // Animação por relógio: a pose sai do estado do avatar e do tempo, sem timers por avatar.
 export const DANCES = [1, 2, 3];
-export const DANCE_NAMES = { 1: 'Balanço', 2: 'Braços para cima', 3: 'Passinho' };
+export const DANCE_NAMES = { 1: 'Sway', 2: 'Hands up', 3: 'Two-step' };
 export const WAVE_MS = 1500;
 export const EMOTE_MS = 4000;
 export const EMOTE_COOLDOWN_MS = 2000;
