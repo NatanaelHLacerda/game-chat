@@ -5,7 +5,7 @@
 
 @section('content')
 <canvas id="game"></canvas>
-<p id="credits">Móveis e cenário: <a href="https://cryovex.itch.io/pixel-isometric-modern-interior" target="_blank" rel="noopener">Pixel Isometric Modern Interior</a>, por Cryovex</p>
+<p id="credits">Móveis e cenário: <a href="https://cryovex.itch.io/pixel-isometric-modern-interior" target="_blank" rel="noopener">Pixel Isometric Modern Interior</a>, por Cryovex · Emotes: <a href="https://pigeonivy.itch.io/tiny-speech-indicators" target="_blank" rel="noopener">Tiny Speech Indicators</a>, por Pigeon Ivy</p>
 
 <section id="room-info" class="window">
     <div class="titlebar" id="room-title">…</div>
@@ -17,6 +17,17 @@
 <section id="navigator" class="window hidden">
     <div class="titlebar">Navegador <button type="button" class="close" data-close="navigator" aria-label="Fechar">×</button></div>
     <div class="content"><ul id="room-list"></ul></div>
+</section>
+
+<section id="emote-picker" class="window hidden">
+    <div class="titlebar">Emotes <button type="button" class="close" data-close="emote-picker" aria-label="Fechar">×</button></div>
+    <div class="content picker-grid" id="emote-grid"></div>
+</section>
+
+<section id="dance-picker" class="window hidden">
+    <div class="titlebar">Dançar <button type="button" class="close" data-close="dance-picker" aria-label="Fechar">×</button></div>
+    <div class="content picker-grid" id="dance-grid"></div>
+    <p class="card-hint hidden" id="dance-hint">Levante para dançar</p>
 </section>
 
 <section id="avatar-card" class="window hidden">
@@ -86,6 +97,8 @@
     <button type="button" class="btn" id="btn-common" aria-label="Sala de estar">🛋️ <span class="label">Sala de estar</span></button>
     <button type="button" class="btn" id="btn-home" aria-label="Meu quarto">🏠 <span class="label">Meu quarto</span></button>
     <button type="button" class="btn" id="btn-nav" aria-label="Navegador">🧭 <span class="label">Navegador</span></button>
+    <button type="button" class="btn" id="btn-emote" aria-label="Emotes">😊 <span class="label">Emotes</span></button>
+    <button type="button" class="btn" id="btn-dance" aria-label="Dançar">💃 <span class="label">Dançar</span></button>
     <button type="button" class="btn mobile-only" id="btn-zoom" aria-label="Zoom">🔍</button>
     <span class="spacer"></span>
     <span id="status">conectando…</span>

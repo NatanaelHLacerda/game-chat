@@ -1,5 +1,7 @@
 import { loadAtlas } from './atlas';
+import { DANCE_NAMES, DANCES } from './animation';
 import { AvatarCard } from './avatar-card';
+import { EMOTES } from './emotes';
 import { createGestures } from './gestures';
 import { toTile } from './iso';
 import { renderNavigator } from './navigator';
@@ -39,6 +41,8 @@ export class Game {
         this.roomTitle = document.getElementById('room-title');
         this.roomPeople = document.getElementById('room-people');
         this.roomInfo = document.getElementById('room-info');
+        this.emotePicker = document.getElementById('emote-picker');
+        this.dancePicker = document.getElementById('dance-picker');
         this.toolbar = document.getElementById('toolbar');
         this.moreMenu = document.getElementById('more-menu');
         this.moreButton = document.getElementById('btn-more');
@@ -63,6 +67,7 @@ export class Game {
     start() {
         loadAtlas().then((atlas) => (this.atlas = atlas));
         bindCloseButtons();
+        this.buildPickers();
         watchConnection(document.getElementById('status'));
         this.watchResume();
         this.bindUi();
@@ -142,10 +147,13 @@ export class Game {
         window.addEventListener('resize', () => this.resize());
         document.getElementById('btn-common').addEventListener('click', () => this.goTo(this.data.common_room_id));
         document.getElementById('btn-home').addEventListener('click', () => this.goTo(this.data.my_room_id));
-        document.getElementById('btn-nav').addEventListener('click', () => {
-            const opening = this.navigatorEl.classList.toggle('hidden') === false;
-            if (opening && this.mobileQuery.matches) this.card.close();
+        document.getElementById('btn-nav').addEventListener('click', () => this.openExclusive(this.navigatorEl));
+        document.getElementById('btn-emote').addEventListener('click', () => this.openExclusive(this.emotePicker));
+        document.getElementById('btn-dance').addEventListener('click', () => {
+            this.openExclusive(this.dancePicker);
+            this.refreshDancePicker();
         });
+        window.addEventListener('keydown', (event) => this.handleKey(event));
         document.getElementById('btn-zoom').addEventListener('click', () => this.setZoom(this.zoom === 2 ? 1 : 2));
         this.moreButton.addEventListener('click', () => {
             const open = this.moreMenu.classList.toggle('open');
@@ -198,7 +206,13 @@ export class Game {
         const touch = type !== 'mouse';
         const avatar = this.avatarAt(px, py, touch);
         if (avatar) {
-            if (this.mobileQuery.matches) this.navigatorEl.classList.add('hidden');
+            // O próprio avatar abre as danças; os outros, o cartão.
+            if (avatar.member.id === this.me.id) {
+                this.openExclusive(this.dancePicker, true);
+                this.refreshDancePicker();
+                return;
+            }
+            if (this.mobileQuery.matches) this.hidePanels();
             this.card.open(avatar.member, { x: px, y: py }, this.calls.cardAction(avatar.member));
             return;
         }
@@ -206,6 +220,70 @@ export class Game {
         const tile = toTile(p.x, p.y, this.camera);
         this.session.moveTo(tile);
         if (touch) this.tapMarker = { tile, until: performance.now() + TAP_MARKER_MS };
+    }
+
+    buildPickers() {
+        const button = (text, title, onClick) => {
+            const el = document.createElement('button');
+            el.type = 'button';
+            el.className = 'btn';
+            el.textContent = text;
+            el.title = title;
+            el.addEventListener('click', onClick);
+            return el;
+        };
+        document.getElementById('emote-grid').replaceChildren(...EMOTES.map((emote) => button(emote.icon, emote.label, () => {
+            this.session.emote(emote.type);
+            if (this.mobileQuery.matches) this.emotePicker.classList.add('hidden');
+        })));
+        const dances = [...DANCES.map((n) => [n, DANCE_NAMES[n]]), [0, 'Parar']];
+        document.getElementById('dance-grid').replaceChildren(...dances.map(([n, name]) => {
+            const el = button(name, name, () => {
+                this.session.dance(n);
+                this.refreshDancePicker();
+            });
+            el.dataset.dance = String(n);
+            return el;
+        }));
+    }
+
+    hidePanels(except = null) {
+        for (const el of [this.navigatorEl, this.card.el, this.emotePicker, this.dancePicker]) {
+            if (el !== except) el.classList.add('hidden');
+        }
+        if (except !== this.card.el) this.card.close();
+    }
+
+    // No celular só um painel fica aberto; no computador o botão só alterna o painel.
+    openExclusive(el, forceOpen = false) {
+        const opening = forceOpen || el.classList.contains('hidden');
+        if (this.mobileQuery.matches && opening) this.hidePanels(el);
+        el.classList.toggle('hidden', !opening);
+    }
+
+    refreshDancePicker() {
+        const mine = this.session.mine();
+        const sitting = Boolean(mine?.sitting);
+        document.getElementById('dance-hint').classList.toggle('hidden', !sitting);
+        for (const el of document.querySelectorAll('#dance-grid .btn')) {
+            el.disabled = sitting;
+            el.classList.toggle('btn-primary', Number(el.dataset.dance) === (mine?.dance ?? 0) && Number(el.dataset.dance) !== 0);
+        }
+    }
+
+    // Atalhos só no computador e fora de campos de texto.
+    handleKey(event) {
+        if (this.mobileQuery.matches || event.target.closest?.('input, textarea, select')) return;
+        if (event.key >= '1' && event.key <= '9') {
+            this.session.emote(EMOTES[Number(event.key) - 1].type);
+        } else if (event.key === 'd' || event.key === 'D') {
+            const mine = this.session.mine();
+            if (mine) this.session.dance(mine.dance ? 0 : 1);
+            this.refreshDancePicker();
+        } else if (event.key === 'Escape') {
+            this.emotePicker.classList.add('hidden');
+            this.dancePicker.classList.add('hidden');
+        }
     }
 
     viewSize() {
@@ -301,6 +379,7 @@ export class Game {
             height: this.height / scale,
             scale,
             pixelRatio: this.dpr * scale,
+            now: performance.now(),
             decorate: (id) => this.calls.decorations(id),
             atlas: this.atlas,
             time: performance.now() / 1000,

@@ -2,13 +2,16 @@
 // Coordenadas em pixels nativos; tudo é desenhado em escala PX.
 import { PX } from './pixel.js';
 
-const BASE = '/sprites/cryovex/';
+const BASE = '/sprites/';
 
 export const SHEETS = {
-    floor: 'floor_free.png',
-    wall: 'wall_free.png',
-    furniture: 'furniture_free.png',
-    decoration: 'decoration_free.png',
+    floor: 'cryovex/floor_free.png',
+    wall: 'cryovex/wall_free.png',
+    furniture: 'cryovex/furniture_free.png',
+    decoration: 'cryovex/decoration_free.png',
+    indicators: 'pigeonivy/tiny_speech_indicators-11x11.png',
+    bubblePop: 'pigeonivy/speech_bubble_animation-11x11.png',
+    exclamation: 'pigeonivy/exclamation-7x8.png',
 };
 
 // Amostra de piso 16×10 (losango de meio tile + espessura); âncora no vértice superior.

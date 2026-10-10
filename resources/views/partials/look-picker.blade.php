@@ -11,4 +11,16 @@
             @endforeach
         </div>
     @endforeach
+    @php($styleLabels = ['hair_style' => 'Cabelo', 'top_style' => 'Roupa'])
+    @php($optionLabels = ['curto' => 'Curto', 'medio' => 'Médio', 'cacheado' => 'Cacheado', 'longo' => 'Longo', 'camiseta' => 'Camiseta', 'regata' => 'Regata', 'moletom' => 'Moletom'])
+    @foreach ($styles as $style => $options)
+        <div class="swatches">
+            <span>{{ $styleLabels[$style] }}</span>
+            @foreach ($options as $option)
+                <label class="chip-style">
+                    <input type="radio" name="look[{{ $style }}]" value="{{ $option }}" @checked(old("look.$style", $look[$style] ?? null) === $option)>{{ $optionLabels[$option] }}
+                </label>
+            @endforeach
+        </div>
+    @endforeach
 </fieldset>

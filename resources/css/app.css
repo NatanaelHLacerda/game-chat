@@ -46,6 +46,9 @@
     .chip-lang:has(input:checked) { background: var(--color-peach); border-color: var(--color-ink); }
     .chip-lang:has(input:disabled) { opacity: .4; cursor: not-allowed; }
     .chip-lang input { display: none; }
+    .chip-style { display: inline-flex; align-items: center; padding: 2px 8px; background: #fff; border: 1px solid #d5c4ab; border-radius: 9px; cursor: pointer; }
+    .chip-style:has(input:checked) { background: var(--color-peach); border-color: var(--color-ink); }
+    .chip-style input { display: none; }
 
     /* Entrar / cadastro / perfil */
     .auth { width: min(340px, 100%); margin: 6vh auto 0; }
@@ -88,6 +91,11 @@
     #room-list .count.empty { background: #c8b9a3; }
 
     #avatar-card { position: fixed; z-index: 7; width: 210px; }
+    #emote-picker, #dance-picker { position: fixed; bottom: 64px; left: 12px; z-index: 7; width: 260px; }
+    .picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    #emote-grid .btn { padding: 4px; font-size: 18px; }
+    #dance-grid { grid-template-columns: repeat(2, 1fr); }
+    #dance-picker .card-hint { padding: 0 12px 10px; }
     .card-actions { padding: 0 12px 10px; }
     .card-actions .btn { width: 100%; }
     .card-actions .btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -148,9 +156,10 @@
         #room-info .content { display: none; }
         #room-info.expanded .content { display: block; }
 
-        #navigator, #avatar-card { top: auto; right: 8px; bottom: calc(var(--bar-h) + var(--call-h) + 8px); left: 8px !important; width: auto; max-height: 60dvh; overflow-y: auto; }
+        #navigator, #avatar-card, #emote-picker, #dance-picker { top: auto; right: 8px; bottom: calc(var(--bar-h) + var(--call-h) + 8px); left: 8px !important; width: auto; max-height: 60dvh; overflow-y: auto; }
         #room-list { max-height: none; }
         #room-list li { min-height: 44px; }
+        .picker-grid .btn { min-height: 44px; }
         .titlebar { padding-right: 52px; }
         .titlebar .close { top: 0; right: 0; width: 44px; height: 100%; border-radius: 0 5px 0 0; }
 

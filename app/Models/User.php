@@ -54,6 +54,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Aparência completa: contas antigas sem estilos recebem os do padrão.
+     *
+     * @return array<string, string>
+     */
+    public function fullLook(): array
+    {
+        return array_merge(config('republica.default_look'), $this->look ?? []);
+    }
+
+    /**
      * Dados públicos do morador enviados aos canais de presença.
      *
      * @return array<string, mixed>
@@ -63,7 +73,7 @@ class User extends Authenticatable
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'look' => $this->look,
+            'look' => $this->fullLook(),
             'speaks' => $this->speaks,
             'practices' => $this->practices,
         ];

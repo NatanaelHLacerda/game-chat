@@ -22,11 +22,18 @@ return [
         'pants' => ['#6b4a3a', '#3e3431', '#5f8f86', '#c9a27e', '#8d5b4c', '#e8735a'],
     ],
 
+    'look_styles' => [
+        'hair_style' => ['curto', 'medio', 'cacheado', 'longo'],
+        'top_style' => ['camiseta', 'regata', 'moletom'],
+    ],
+
     'default_look' => [
         'skin' => '#f3c79e',
         'hair' => '#6b4a3a',
         'shirt' => '#e8735a',
         'pants' => '#6b4a3a',
+        'hair_style' => 'curto',
+        'top_style' => 'camiseta',
     ],
 
     'languages' => [

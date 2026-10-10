@@ -15,6 +15,7 @@ class RegisterController extends Controller
     {
         return view('auth.register', [
             'palette' => config('republica.look_palette'),
+            'styles' => config('republica.look_styles'),
             'languages' => config('republica.languages'),
             'defaultLook' => config('republica.default_look'),
         ]);

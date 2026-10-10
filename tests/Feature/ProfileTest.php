@@ -29,6 +29,19 @@ class ProfileTest extends TestCase
         $this->assertSame('Ana', $user->name);
     }
 
+    public function test_account_without_styles_gets_default_styles_in_presence(): void
+    {
+        $look = ['skin' => '#5e3c28', 'hair' => '#e3b766', 'shirt' => '#5f8f86', 'pants' => '#c9a27e'];
+        $user = User::factory()->create(['look' => $look]);
+
+        $presence = $user->fresh()->toPresence()['look'];
+
+        $this->assertSame('curto', $presence['hair_style']);
+        $this->assertSame('camiseta', $presence['top_style']);
+        $this->assertSame('#5e3c28', $presence['skin']);
+        $this->assertSame($look, $user->fresh()->look);
+    }
+
     public function test_invalid_profile_is_rejected(): void
     {
         $user = User::factory()->create();

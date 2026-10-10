@@ -11,7 +11,7 @@
         @method('PUT')
         <canvas id="preview" width="140" height="170"></canvas>
         <div class="form">
-            @include('partials.look-picker', ['look' => $user->look])
+            @include('partials.look-picker', ['look' => $user->fullLook()])
             @include('partials.language-picker', ['selected' => ['speaks' => $user->speaks, 'practices' => $user->practices]])
 
             @if ($errors->any()) <p class="error">{{ $errors->first() }}</p> @endif

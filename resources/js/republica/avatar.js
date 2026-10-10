@@ -1,76 +1,109 @@
-// Avatar em pixel art procedural. Unidade = 2 px × scale; origem nos pés; desenhado olhando para a direita.
+// Avatar em pixel art procedural no estilo do Habbo. Unidade = 2 px × scale; origem nos pés;
+// partes e poses vêm do rig (avatar-rig.js); a vista esquerda é a direita espelhada.
+import { poseFor } from './animation';
+import { BOUNDS, buildParts, normalizeLook, paletteFor, shade } from './avatar-rig';
 import { INK, PX, fillEllipse, rect as pixelRect, strokeEllipse } from './pixel';
 
-const SHOE = '#3e3431';
+export { shade };
 
-export function shade(hex, factor) {
-    const n = parseInt(hex.slice(1), 16);
-    const channel = (c) => Math.max(0, Math.min(255, Math.round(factor < 0 ? c * (1 + factor) : c + (255 - c) * factor)));
-    const r = channel(n >> 16);
-    const g = channel((n >> 8) & 255);
-    const b = channel(n & 255);
+const FLAT = new Set(['ink', 'white', 'mouth', 'blush']);
+const CACHE_MAX = 400;
 
-    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+// Cor de uma parte: "skin" usa os 3 tons; "skin.dark" é um tom só.
+function toneOf(palette, paint, tone) {
+    const [name, fixed] = paint.split('.');
+    const entry = palette[name];
+    if (typeof entry === 'string') return entry;
+    return entry[fixed ?? tone];
 }
 
+// Faixas por linha de uma parte; round "all"/"top" tira 1 unidade das pontas da 1ª (e da última) linha.
+function spans(x, y, w, h, round) {
+    const rows = [];
+    for (let j = 0; j < h; j++) {
+        const cut = w > 2 && h > 1 && ((j === 0 && round) || (j === h - 1 && round === 'all')) ? 1 : 0;
+        rows.push({ y: y + j, x0: x + cut, x1: x + w - cut });
+    }
+    return rows;
+}
+
+function fillSpans(ctx, rows, u) {
+    for (const r of rows) ctx.fillRect(r.x0 * u, r.y * u, (r.x1 - r.x0) * u, u);
+}
+
+// Silhueta escura, contornos internos (sep) e preenchimento em 3 tons (luz à esquerda).
+export function paintParts(ctx, parts, palette, u) {
+    const outline = (p) => spans(p.x - 1, p.y - 1, p.w + 2, p.h + 2, p.round);
+    ctx.fillStyle = INK;
+    for (const p of parts) fillSpans(ctx, outline(p), u);
+
+    for (const p of parts) {
+        if (p.sep) {
+            ctx.fillStyle = INK;
+            fillSpans(ctx, outline(p), u);
+        }
+        const rows = spans(p.x, p.y, p.w, p.h, p.round);
+        const flat = FLAT.has(p.paint) || p.paint.includes('.') || p.w === 1 || p.h === 1;
+        ctx.fillStyle = toneOf(palette, p.paint, 'base');
+        fillSpans(ctx, rows, u);
+        if (flat) continue;
+        ctx.fillStyle = toneOf(palette, p.paint, 'dark');
+        for (const r of rows) ctx.fillRect((r.x1 - 1) * u, r.y * u, u, u);
+        const last = rows[rows.length - 1];
+        ctx.fillRect(last.x0 * u, last.y * u, (last.x1 - last.x0) * u, u);
+        if (p.w >= 3) {
+            ctx.fillStyle = toneOf(palette, p.paint, 'light');
+            for (const r of rows.slice(0, -1)) ctx.fillRect(r.x0 * u, r.y * u, u, u);
+        }
+    }
+}
+
+// Quadros já desenhados, por aparência + pose + resolução; LRU simples.
+const frames = new Map();
+
+function cachedFrame(key, width, height, draw) {
+    let canvas = frames.get(key);
+    if (canvas) {
+        frames.delete(key);
+        frames.set(key, canvas);
+        return canvas;
+    }
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    draw(canvas.getContext('2d'));
+    frames.set(key, canvas);
+    if (frames.size > CACHE_MAX) frames.delete(frames.keys().next().value);
+    return canvas;
+}
+
+const poseKey = (p) => `${p.anim}:${p.frame}:${p.blink ? 1 : 0}:${p.talk ? 1 : 0}:${p.waving ? p.waveFrame : -1}:${p.back ? 1 : 0}`;
+
 export function drawAvatar(ctx, footX, footY, look, opts = {}) {
-    const { dir = 1, back = false, walkPhase = 0, walking = false, sitting = false, scale = 1 } = opts;
+    const { dir = 1, back = false, scale = 1, pixelRatio = null } = opts;
     const u = 2 * scale;
+    const base = opts.pose ?? poseFor({ walking: opts.walking, walkPhase: opts.walkPhase, sitting: opts.sitting });
+    const pose = { ...base, back };
+    const full = normalizeLook(look);
 
     ctx.save();
     ctx.translate(Math.round(footX), Math.round(footY));
-
-    fillEllipse(ctx, 0, 0, Math.round(12 * scale / u) * u, Math.round(5 * scale / u) * u, 'rgba(43, 37, 35, 0.25)');
-
+    fillEllipse(ctx, 0, 0, Math.round((12 * scale) / u) * u, Math.round((5 * scale) / u) * u, 'rgba(43, 37, 35, 0.25)');
     ctx.scale(dir, 1);
-    // Os retângulos são acumulados: primeiro a silhueta escura (1 unidade maior), depois as cores.
-    const parts = [];
-    const rect = (x, y, w, h, color) => parts.push([x, y, w, h, color]);
 
-    const step = walking ? Math.round(Math.sin(walkPhase)) : 0;
-    const body = sitting ? 3 : 0; // sentado, o tronco desce
-
-    // Pernas
-    if (sitting) {
-        rect(-4, -10 + body, 8, 3, look.pants);
-        rect(2, -7 + body, 3, 5, shade(look.pants, -0.1));
-        rect(2, -2 + body, 4, 1, SHOE);
+    const paint = (target, unit) => paintParts(target, buildParts(full, pose), paletteFor(full), unit);
+    if (pixelRatio) {
+        const w = (BOUNDS.x1 - BOUNDS.x0) * u;
+        const h = (BOUNDS.y1 - BOUNDS.y0) * u;
+        const key = `${JSON.stringify(full)}|${poseKey(pose)}|${pixelRatio}|${scale}`;
+        const frame = cachedFrame(key, Math.ceil(w * pixelRatio), Math.ceil(h * pixelRatio), (fctx) => {
+            fctx.setTransform(pixelRatio, 0, 0, pixelRatio, -BOUNDS.x0 * u * pixelRatio, -BOUNDS.y0 * u * pixelRatio);
+            paint(fctx, u);
+        });
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(frame, BOUNDS.x0 * u, BOUNDS.y0 * u, w, h);
     } else {
-        const backLift = step > 0 ? 1 : 0;
-        const frontLift = step < 0 ? 1 : 0;
-        rect(-4, -10, 3, 9 - backLift, shade(look.pants, -0.15));
-        rect(-4, -1 - backLift, 4, 1, SHOE);
-        rect(1, -10, 3, 9 - frontLift, look.pants);
-        rect(1, -1 - frontLift, 4, 1, SHOE);
-    }
-
-    // Tronco e braços
-    const swing = walking ? step : 0;
-    rect(-6, -18 + body + swing, 2, 7, shade(look.shirt, -0.2));
-    rect(-6, -11 + body + swing, 2, 2, shade(look.skin, -0.1));
-    rect(-4, -19 + body, 8, 10, look.shirt);
-    rect(2, -19 + body, 2, 10, shade(look.shirt, -0.1));
-    rect(4, -18 + body - swing, 2, 7, look.shirt);
-    rect(4, -11 + body - swing, 2, 2, look.skin);
-
-    // Pescoço, cabeça e cabelo
-    rect(-1, -20 + body, 2, 1, shade(look.skin, -0.1));
-    rect(-4, -28 + body, 8, 8, look.skin);
-    if (back) {
-        rect(-4, -29 + body, 8, 7, look.hair);
-    } else {
-        rect(-4, -29 + body, 8, 3, look.hair);
-        rect(-4, -26 + body, 2, 3, look.hair);
-        rect(1, -25 + body, 1, 1, INK);
-        rect(3, -25 + body, 1, 1, INK);
-        rect(2, -22 + body, 1, 1, shade(look.skin, -0.3));
-    }
-
-    ctx.fillStyle = INK;
-    for (const [x, y, w, h] of parts) ctx.fillRect((x - 1) * u, (y - 1) * u, (w + 2) * u, (h + 2) * u);
-    for (const [x, y, w, h, color] of parts) {
-        ctx.fillStyle = color;
-        ctx.fillRect(x * u, y * u, w * u, h * u);
+        paint(ctx, u);
     }
 
     ctx.restore();

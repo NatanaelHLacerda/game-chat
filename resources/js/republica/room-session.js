@@ -1,3 +1,5 @@
+import { EMOTE_RECEIVE_MS, WAVE_MS, canEmote, isDance } from './animation';
+import { isEmote } from './emotes';
 import { buildGrid, findPath, nearestFree } from './pathfinding';
 
 const SPEED = 2.5; // tiles por segundo
@@ -53,7 +55,9 @@ export class RoomSession {
                 this.onChange();
             })
             .listenForWhisper('state', (data) => this.receiveState(data))
-            .listenForWhisper('move', (data) => this.receiveMove(data));
+            .listenForWhisper('move', (data) => this.receiveMove(data))
+            .listenForWhisper('action', (data) => this.receiveAction(data))
+            .listenForWhisper('emote', (data) => this.receiveEmote(data));
 
         for (const [event, handler] of Object.entries(this.hooks.whispers ?? {})) {
             this.channel.listenForWhisper(event, (data) => {
@@ -97,6 +101,10 @@ export class RoomSession {
             back: false,
             sitting: false,
             walkPhase: 0,
+            dance: 0,
+            waveUntil: 0,
+            emote: null,
+            lastEmoteAt: -Infinity,
         });
     }
 
@@ -115,7 +123,7 @@ export class RoomSession {
     }
 
     stateOf(avatar) {
-        return { id: this.me.id, x: avatar.pos.x, y: avatar.pos.y, dir: avatar.dir };
+        return { id: this.me.id, x: avatar.pos.x, y: avatar.pos.y, dir: avatar.dir, dance: avatar.dance };
     }
 
     // API pública: também usada pelo CallManager para a sinalização da voz.
@@ -167,6 +175,50 @@ export class RoomSession {
             avatar.path = path;
         }
         avatar.sitting = false;
+        avatar.dance = 0;
+    }
+
+    // Dança do próprio avatar (0 = parar); sentado não dança.
+    dance(value) {
+        const mine = this.mine();
+        if (!mine || mine.sitting || !isDance(value)) return false;
+        mine.dance = value;
+        this.whisper('action', { id: this.me.id, kind: 'dance', value });
+        return true;
+    }
+
+    wave() {
+        const mine = this.mine();
+        if (!mine) return;
+        mine.waveUntil = performance.now() + WAVE_MS;
+        this.whisper('action', { id: this.me.id, kind: 'wave' });
+    }
+
+    // No máximo 1 emote a cada 2 s; "oi" também acena.
+    emote(type) {
+        const mine = this.mine();
+        const now = performance.now();
+        if (!mine || !isEmote(type) || !canEmote(mine.lastEmoteAt, now)) return false;
+        mine.emote = { type, at: now };
+        mine.lastEmoteAt = now;
+        this.whisper('emote', { id: this.me.id, type });
+        if (type === 'oi') this.wave();
+        return true;
+    }
+
+    receiveAction(data) {
+        const avatar = this.avatars.get(data?.id);
+        if (!avatar || data.id === this.me.id) return;
+        if (data.kind === 'dance' && isDance(data.value) && !avatar.sitting) avatar.dance = data.value;
+        if (data.kind === 'wave') avatar.waveUntil = performance.now() + WAVE_MS;
+    }
+
+    receiveEmote(data) {
+        const avatar = this.avatars.get(data?.id);
+        const now = performance.now();
+        if (!avatar || data.id === this.me.id || !isEmote(data.type) || !canEmote(avatar.lastEmoteAt, now, EMOTE_RECEIVE_MS)) return;
+        avatar.emote = { type: data.type, at: now };
+        avatar.lastEmoteAt = now;
     }
 
     receiveState(data) {
@@ -179,6 +231,7 @@ export class RoomSession {
         avatar.progress = 0;
         avatar.dir = data.dir === -1 ? -1 : 1;
         avatar.sitting = this.grid.seat(data.x, data.y);
+        avatar.dance = !avatar.sitting && isDance(data.dance) ? data.dance : 0;
     }
 
     receiveMove(data) {
@@ -211,6 +264,7 @@ export class RoomSession {
                 avatar.progress = 0;
                 avatar.render = { ...avatar.pos };
                 avatar.sitting = this.grid.seat(avatar.pos.x, avatar.pos.y);
+                if (avatar.sitting) avatar.dance = 0;
                 continue;
             }
 

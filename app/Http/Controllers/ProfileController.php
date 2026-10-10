@@ -14,6 +14,7 @@ class ProfileController extends Controller
         return view('profile.edit', [
             'user' => $request->user(),
             'palette' => config('republica.look_palette'),
+            'styles' => config('republica.look_styles'),
             'languages' => config('republica.languages'),
         ]);
     }

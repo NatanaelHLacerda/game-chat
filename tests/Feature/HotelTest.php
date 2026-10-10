@@ -51,7 +51,12 @@ class HotelTest extends TestCase
             ->assertDontSee('desktop-only')
             ->assertSee('id="btn-zoom"', false)
             ->assertSee('id="more-menu"', false)
-            ->assertSee('id="audio-unlock"', false);
+            ->assertSee('id="audio-unlock"', false)
+            ->assertSee('id="btn-emote"', false)
+            ->assertSee('id="btn-dance"', false)
+            ->assertSee('id="emote-picker"', false)
+            ->assertSee('id="dance-picker"', false)
+            ->assertSee('Pigeon Ivy');
     }
 
     public function test_bootstrap_includes_voice_settings(): void

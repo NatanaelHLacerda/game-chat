@@ -6,7 +6,7 @@ const preview = document.getElementById('preview');
 function currentLook() {
     const look = {};
     for (const input of form.querySelectorAll('[data-look-picker] input:checked')) {
-        look[input.name.match(/look\[(\w+)\]/)[1]] = input.value;
+        look[input.name.match(/look\[(\w+)\]/)[1]] = input.value; // cores e estilos
     }
     return look;
 }

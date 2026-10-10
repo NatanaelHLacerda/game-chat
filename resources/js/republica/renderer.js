@@ -12,7 +12,9 @@ import {
     facing,
     seatHeight,
 } from './atlas';
+import { WAVE_MS, poseFor, seatFacing } from './animation';
 import { drawAvatar, drawHeadset, drawSpeakingRing, shade } from './avatar';
+import { drawEmote } from './emotes';
 import { TILE_H, TILE_W, WALL_H, toScreen } from './iso';
 import { INK, PX, block, fillDiamond, fillEllipse, rect, strokeDiamond, wallFace } from './pixel';
 import { groupRugs } from './rugs';
@@ -236,7 +238,7 @@ export function avatarFoot(avatar, camera, grid, layout) {
 }
 
 /**
- * state: { layout, camera, grid, avatars, hoverTile, hoverAvatarId, width, height, decorate, atlas, time, scale, pixelRatio }
+ * state: { layout, camera, grid, avatars, hoverTile, hoverAvatarId, width, height, decorate, atlas, time, now, scale, pixelRatio }
  */
 export function drawScene(ctx, state) {
     const { layout, camera, grid, avatars, atlas } = state;
@@ -265,18 +267,31 @@ export function drawScene(ctx, state) {
                 const foot = avatarFoot(avatar, camera, grid, layout);
                 const marks = state.decorate?.(avatar.member.id) ?? {};
                 if (marks.speaking) drawSpeakingRing(ctx, foot.x, foot.y, state.time ?? 0);
-                drawAvatar(ctx, foot.x, foot.y, avatar.member.look, {
-                    dir: avatar.dir,
-                    back: avatar.back,
-                    walkPhase: avatar.walkPhase,
+                const seated = avatar.sitting && FURNITURE[typeAt(layout, avatar.pos.x, avatar.pos.y)];
+                const { dir, back } = seated ? seatFacing(facing(avatar.pos)) : avatar;
+                const now = state.now ?? 0;
+                const waving = now < (avatar.waveUntil ?? 0);
+                const pose = poseFor({
                     walking: avatar.path.length > 0,
+                    walkPhase: avatar.walkPhase,
                     sitting: avatar.sitting,
+                    dance: avatar.dance ?? 0,
+                    waving,
+                    waveElapsed: waving ? now - (avatar.waveUntil - WAVE_MS) : 0,
+                    talking: Boolean(marks.speaking),
+                    time: state.time ?? 0,
+                    seed: avatar.member.id,
                 });
+                drawAvatar(ctx, foot.x, foot.y, avatar.member.look, { dir, back, pose, pixelRatio: state.pixelRatio });
                 if (marks.inCall) drawHeadset(ctx, foot.x, foot.y - HEAD_TOP + (avatar.sitting ? 6 : 0));
             },
         });
     }
     items.sort((a, b) => a.depth - b.depth).forEach((item) => item.draw());
+
+    for (const avatar of avatars) {
+        if (avatar.emote) drawEmote(ctx, atlas, avatar.emote, avatarFoot(avatar, camera, grid, layout), state.now ?? 0);
+    }
 
     const hovered = avatars.find((a) => a.member.id === state.hoverAvatarId);
     if (hovered) {

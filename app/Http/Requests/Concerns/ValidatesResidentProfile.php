@@ -16,17 +16,24 @@ trait ValidatesResidentProfile
     {
         $languages = array_keys(config('republica.languages'));
         $max = config('republica.max_languages');
+        $palette = config('republica.look_palette');
+        $styles = config('republica.look_styles');
 
         $rules = [
-            'look' => ['required', 'array'],
+            'look' => ['required', 'array:'.implode(',', [...array_keys($palette), ...array_keys($styles)])],
             'speaks' => ['required', 'array', 'min:1', "max:$max"],
             'speaks.*' => ['distinct', Rule::in($languages)],
             'practices' => ['required', 'array', 'min:1', "max:$max"],
             'practices.*' => ['distinct', Rule::in($languages)],
         ];
 
-        foreach (config('republica.look_palette') as $part => $colors) {
+        foreach ($palette as $part => $colors) {
             $rules["look.$part"] = ['required', Rule::in($colors)];
+        }
+
+        // Estilos são opcionais: quem não manda fica com o padrão (User::fullLook).
+        foreach ($styles as $style => $options) {
+            $rules["look.$style"] = ['sometimes', Rule::in($options)];
         }
 
         return $rules;

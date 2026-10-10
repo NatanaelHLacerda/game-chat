@@ -34,6 +34,27 @@ class RegistrationTest extends TestCase
         $this->assertSame(config('republica.private_layouts')[0], $user->room->layout);
     }
 
+    public function test_registration_saves_hair_and_top_styles(): void
+    {
+        $look = array_merge(config('republica.default_look'), ['hair_style' => 'cacheado', 'top_style' => 'moletom']);
+
+        $this->post('/cadastro', $this->payload(['look' => $look]))->assertRedirect('/hotel');
+
+        $saved = User::where('name_key', 'ana')->firstOrFail()->look;
+        $this->assertSame('cacheado', $saved['hair_style']);
+        $this->assertSame('moletom', $saved['top_style']);
+    }
+
+    public function test_invalid_style_and_unknown_look_keys_are_rejected(): void
+    {
+        $look = array_merge(config('republica.default_look'), ['hair_style' => 'moicano']);
+        $this->post('/cadastro', $this->payload(['look' => $look]))->assertSessionHasErrors('look.hair_style');
+
+        $look = array_merge(config('republica.default_look'), ['hat' => 'coroa']);
+        $this->post('/cadastro', $this->payload(['look' => $look]))->assertSessionHasErrors('look');
+        $this->assertGuest();
+    }
+
     public function test_name_is_unique_ignoring_case_and_spaces(): void
     {
         $this->post('/cadastro', $this->payload());
